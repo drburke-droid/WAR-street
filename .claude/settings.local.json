@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install:*)",
+      "Bash(grep:*)",
+      "Bash(npx vite:*)",
+      "Bash(start:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(node:*)",
+      "Bash(mv:*)",
+      "Bash(gh repo:*)",
+      "Bash(where gh:*)",
+      "Bash(git init:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git remote:*)",
+      "Bash(git config:*)",
+      "Bash(git push:*)",
+      "Bash(\"/c/Users/rober/AppData/Local/GitHubDesktop/bin/github\":*)",
+      "Bash(winget install:*)",
+      "Bash(export:*)"
+    ]
+  }
+}
