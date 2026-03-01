@@ -5,3 +5,10 @@ dist/
 .DS_Store
 Thumbs.db
 check.cjs
+
+# Backend
+__pycache__/
+*.pyc
+backend/.env
+*.egg-info/
+.venv/
