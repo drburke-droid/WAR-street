@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 //  WAR STREET -- Responsive: Palm Pilot (mobile) / Bloomberg (desktop)
 // ═══════════════════════════════════════════════════════════════
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API = import.meta.env.DEV ? "http://localhost:8000" : "https://war-street-production.up.railway.app";
 const BUDGET = 300_000_000;
 const MAX_TX = 6;
 const HSLOTS = ["C","1B","2B","3B","SS","OF1","OF2","OF3"];
