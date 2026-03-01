@@ -23,6 +23,8 @@ jobs:
           node-version: 20
       - name: Install and build
         working-directory: app
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: |
           npm ci
           npm run build
