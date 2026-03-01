@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS players (
 CREATE TABLE IF NOT EXISTS owners (
   id SERIAL PRIMARY KEY,
   name TEXT UNIQUE NOT NULL,
-  budget_remaining INTEGER DEFAULT 160000000,
+  budget_remaining INTEGER DEFAULT 300000000,
   transactions_this_week INTEGER DEFAULT 0,
   total_war NUMERIC(5,1) DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()

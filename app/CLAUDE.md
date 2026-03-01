@@ -29,9 +29,10 @@ React component (JSX). Uses only React core (`useState`, `useMemo`, `useCallback
 
 |Rule        |Detail                                                                                                              |
 |------------|--------------------------------------------------------------------------------------------------------------------|
-|Budget      |$160M per owner                                                                                                     |
+|Budget      |$300M per owner                                                                                                     |
 |Roster      |13 slots: C, 1B, 2B, 3B, SS, OF, OF, OF, SP, SP, SP, SP, RP                                                         |
-|Transactions|2 per week (Mon–Sun), buy or sell = 1 tx                                                                            |
+|Transactions|6 per week (Mon–Sun), buy or sell = 1 tx                                                                            |
+|Owners      |12 max to start (designed to scale quickly)                                                                         |
 |Ownership   |Shared — multiple owners can hold the same player                                                                   |
 |Scoring     |Cumulative WAR. Highest total at season end wins                                                                    |
 |Visibility  |Rosters are private. Standings show only team name, WAR, portfolio value                                            |

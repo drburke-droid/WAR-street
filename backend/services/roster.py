@@ -6,7 +6,7 @@ from db.client import get_supabase
 HITTER_SLOTS = {"C", "1B", "2B", "3B", "SS", "OF1", "OF2", "OF3"}
 PITCHER_SLOTS = {"SP1", "SP2", "SP3", "SP4", "RP"}
 ALL_SLOTS = HITTER_SLOTS | PITCHER_SLOTS
-MAX_TX_PER_WEEK = 2
+MAX_TX_PER_WEEK = 6
 
 
 def _validate_slot(slot: str, eligible: list[str]):
@@ -27,7 +27,7 @@ def buy_player(owner_id: int, player_id: int, slot: str) -> dict:
 
     # Check transaction limit
     if owner["transactions_this_week"] >= MAX_TX_PER_WEEK:
-        raise HTTPException(400, "Transaction limit reached (2/week)")
+        raise HTTPException(400, f"Transaction limit reached ({MAX_TX_PER_WEEK}/week)")
 
     # Fetch player
     player = sb.table("players").select("*").eq("id", player_id).single().execute()
@@ -95,7 +95,7 @@ def sell_player(owner_id: int, player_id: int, slot: str) -> dict:
 
     # Check transaction limit
     if owner["transactions_this_week"] >= MAX_TX_PER_WEEK:
-        raise HTTPException(400, "Transaction limit reached (2/week)")
+        raise HTTPException(400, f"Transaction limit reached ({MAX_TX_PER_WEEK}/week)")
 
     # Verify roster entry exists
     entry = (

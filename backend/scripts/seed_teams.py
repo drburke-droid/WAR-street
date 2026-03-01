@@ -1,5 +1,5 @@
 """
-Create 10 test owner entries with $160M budget each.
+Create 12 test owner entries with $300M budget each.
 
 Run: python -m scripts.seed_teams
 """
@@ -21,6 +21,8 @@ TEAM_NAMES = [
     "Blue Chip Jays",
     "IPO Astros",
     "HODL Rangers",
+    "Futures Phillies",
+    "Options Angels",
 ]
 
 
