@@ -1,0 +1,8 @@
+fastapi>=0.104
+uvicorn[standard]>=0.24
+supabase>=2.0
+pydantic>=2.0
+pydantic-settings>=2.0
+python-dotenv>=1.0
+pybaseball>=2.3
+httpx>=0.25
