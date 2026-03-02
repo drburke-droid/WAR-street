@@ -233,6 +233,7 @@ return (
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap');
       html,body{overflow-x:hidden !important}
+      .palm-screen{overflow-x:hidden !important}
       .palm-screen::-webkit-scrollbar{width:3px}
       .palm-screen::-webkit-scrollbar-thumb{background:${lo}}
       .palm-screen::-webkit-scrollbar-track{background:${bgc}}
