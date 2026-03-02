@@ -220,14 +220,15 @@ return (
     {/* Palm Device — real image frame */}
     <div style={{
       position:"relative",
-      width: "min(100vw, calc(100vh * 278 / 494))",
-      height: "min(100vh, calc(100vw * 494 / 278))",
+      width: "min(100vw, calc(100vh * 768 / 1376))",
+      height: "min(100vh, calc(100vw * 1376 / 768))",
     }}>
       {/* LCD Screen — positioned in the transparent cutout */}
       <div className="palm-screen" style={{
         position:"absolute",
-        left:"5.04%", top:"10.93%",
-        width:"92.09%", height:"68.02%",
+        left:"4.56%", top:"10.68%",
+        width:"93.49%", height:"68.60%",
+        borderRadius: 12,
         background: bgc,
         overflow:"hidden",
         display:"flex", flexDirection:"column",
