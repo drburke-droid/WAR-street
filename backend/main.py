@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routes import players, owners, transactions, leaderboard
+from routes import players, owners, transactions, leaderboard, boxscores
 
 app = FastAPI(title="WAR STREET API", version="1.0.0")
 
@@ -12,6 +12,8 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:5175",
+        "http://localhost:5176",
+        "http://localhost:5177",
         "http://localhost:3000",
         "https://drburke-droid.github.io",
     ],
@@ -24,6 +26,7 @@ app.include_router(players.router)
 app.include_router(owners.router)
 app.include_router(transactions.router)
 app.include_router(leaderboard.router)
+app.include_router(boxscores.router)
 
 
 @app.get("/health")

@@ -122,6 +122,10 @@ const sparkFrames = ["1W","1M","SZN"];
 
 const [me, setMe] = useState({ id:1, nm:"...", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
 const [lb, setLb] = useState([]);
+const [showPaper, setShowPaper] = useState(false);
+const [boxData, setBoxData] = useState(null);
+const [boxLoading, setBoxLoading] = useState(false);
+const [leaders, setLeaders] = useState(null);
 
 // ── API Fetches ──
 useEffect(() => {
@@ -203,6 +207,27 @@ setSel(null);
 };
 const cycleFrame = () => { setChgFrame(f=>frames[(frames.indexOf(f)+1)%frames.length]) };
 const cycleSparkFrame = () => { setSparkFrame(f=>sparkFrames[(sparkFrames.indexOf(f)+1)%sparkFrames.length]) };
+
+const openPaper = async () => {
+  setShowPaper(true);
+  if (boxData) return;
+  setBoxLoading(true);
+  try {
+    const [boxRes, ldRes] = await Promise.all([
+      fetch(`${API}/boxscores`),
+      fetch(`${API}/boxscores/leaders?season=2025`)
+    ]);
+    setBoxData(await boxRes.json());
+    try { setLeaders(await ldRes.json()); } catch(e) { /* leaders optional */ }
+  } catch(e) { /* silent */ }
+  setBoxLoading(false);
+};
+
+useEffect(() => {
+  const onKey = e => { if (e.key === "Escape") setShowPaper(false) };
+  window.addEventListener("keydown", onKey);
+  return () => window.removeEventListener("keydown", onKey);
+}, []);
 
 const tickerItems = useMemo(() => [...pl].sort((a,b)=>b.c-a.c).filter(p=>p.c>=10_000_000).slice(0,30).map(p => {
 const ch = simChg(p,"1D");
@@ -443,7 +468,7 @@ const td2_d={...pad_d,borderBottom:`1px solid #161616`};
 
 return(
 <div style={{background:"#2a2520",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-<style>{`@import url('https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@800&display=swap'); *{box-sizing:border-box} .crt-screen *::-webkit-scrollbar{width:0;display:none} .crt-screen>.crt-scroll::-webkit-scrollbar{width:8px;display:block} .crt-screen>.crt-scroll::-webkit-scrollbar-thumb{background:#555;border-radius:3px} .crt-screen>.crt-scroll::-webkit-scrollbar-track{background:#1a1a1a} .crt-screen tr:hover td{background:#111 !important} .crt-screen ::selection{background:${g};color:${bg}} .crt-screen input::placeholder{color:#333} .crt-screen .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-screen .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999}`}</style>
+<style>{`@import url('https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@800&family=Source+Sans+3:wght@200..900&display=swap'); *{box-sizing:border-box} .crt-screen *::-webkit-scrollbar{width:0;display:none} .crt-screen>.crt-scroll::-webkit-scrollbar{width:8px;display:block} .crt-screen>.crt-scroll::-webkit-scrollbar-thumb{background:#555;border-radius:3px} .crt-screen>.crt-scroll::-webkit-scrollbar-track{background:#1a1a1a} .crt-screen tr:hover td{background:#111 !important} .crt-screen ::selection{background:${g};color:${bg}} .crt-screen input::placeholder{color:#333} .crt-screen .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-screen .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999} .np-scroll::-webkit-scrollbar{width:6px} .np-scroll::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px} .np-scroll::-webkit-scrollbar-track{background:transparent} .np-scroll table{border-collapse:collapse;table-layout:fixed;width:100%} .np-scroll td,.np-scroll th{overflow:hidden}`}</style>
 
 {/* Monitor container */}
 <div style={{position:"relative",width:"min(100vw, calc(100vh * 1080 / 608))",height:"min(100vh, calc(100vw * 608 / 1080))"}}>
@@ -650,6 +675,163 @@ return(
 
   {/* Monitor frame overlay */}
   <img src="/WAR-street/monitor-frame.png" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:2}}/>
+
+  {/* Newspaper hotspot — clickable area over the newspaper in the desk image */}
+  <div onClick={openPaper} style={{position:"absolute",left:"0%",top:"69.9%",width:"100%",height:"30.1%",zIndex:3,cursor:"pointer"}} title="Yesterday's Box Scores"/>
+
+  {/* Newspaper overlay */}
+  {showPaper&&<>
+    {/* Backdrop */}
+    <div onClick={()=>setShowPaper(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.55)",zIndex:9}}/>
+    {/* Newspaper — waldrn.com layout + newsprint texture */}
+    <div style={{position:"absolute",left:"8%",top:"2%",width:"84%",height:"94%",zIndex:10,background:"#fff",borderRadius:1,boxShadow:"0 8px 40px rgba(0,0,0,0.7)",display:"flex",flexDirection:"column",fontFamily:"'Source Sans 3','Segoe UI',sans-serif",color:"#1a1a1a",overflow:"hidden"}}>
+      {/* Newsprint texture overlay */}
+      <div style={{position:"absolute",inset:0,backgroundImage:"url(/WAR-street/newsprint-texture.jpg)",backgroundSize:"cover",opacity:0.35,pointerEvents:"none",zIndex:0}}/>
+      {/* Content (above texture) */}
+      <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",height:"100%"}}>
+      {/* Masthead */}
+      <div style={{borderBottom:"2px solid #000",padding:"8px 16px 6px",flexShrink:0,textAlign:"center",position:"relative"}}>
+        <div onClick={()=>setShowPaper(false)} style={{position:"absolute",right:10,top:6,cursor:"pointer",fontSize:16,color:"#888",fontFamily:"sans-serif",lineHeight:1}}>✕</div>
+        <div style={{fontStyle:"italic",fontSize:9,color:"#555",marginBottom:2}}>{boxData ? boxData.date : "..."}</div>
+        <div style={{fontSize:22,fontWeight:700,letterSpacing:1,margin:"2px 0"}}>The War Street Journal</div>
+        <div style={{fontSize:11,margin:"2px 0 4px",color:"#333"}}>BASEBALL SCORES</div>
+      </div>
+
+      {/* Scrollable body */}
+      <div className="np-scroll" style={{flex:1,overflow:"auto",padding:"8px 14px"}}>
+
+        {/* League Leaders */}
+        {leaders&&leaders.categories&&leaders.categories.length>0&&<div style={{borderBottom:"2px solid #000",paddingBottom:6,marginBottom:6}}>
+          <div style={{display:"flex",gap:16}}>
+            {/* Batting column */}
+            <div style={{flex:1}}>
+              <div style={{fontSize:11,fontWeight:700,letterSpacing:1,borderBottom:"1px solid #000",paddingBottom:1,marginBottom:3}}>BATTING</div>
+              {leaders.categories.filter(c=>c.stat_group==="hitting").map(cat=><div key={cat.category} style={{marginBottom:4}}>
+                <div style={{fontSize:10,fontWeight:700,borderBottom:"1px solid #ccc",paddingBottom:1,marginBottom:1}}>{cat.category}</div>
+                {cat.leaders.map(l=><div key={l.rank} style={{fontSize:10,lineHeight:1.3,display:"flex",justifyContent:"space-between"}}>
+                  <span>{l.rank}. {l.name.split(" ").pop()} <span style={{color:"#888"}}>{l.team}</span></span>
+                  <span style={{fontWeight:600}}>{l.value}</span>
+                </div>)}
+              </div>)}
+            </div>
+            {/* Pitching column */}
+            <div style={{flex:1}}>
+              <div style={{fontSize:11,fontWeight:700,letterSpacing:1,borderBottom:"1px solid #000",paddingBottom:1,marginBottom:3}}>PITCHING</div>
+              {leaders.categories.filter(c=>c.stat_group==="pitching").map(cat=><div key={cat.category} style={{marginBottom:4}}>
+                <div style={{fontSize:10,fontWeight:700,borderBottom:"1px solid #ccc",paddingBottom:1,marginBottom:1}}>{cat.category}</div>
+                {cat.leaders.map(l=><div key={l.rank} style={{fontSize:10,lineHeight:1.3,display:"flex",justifyContent:"space-between"}}>
+                  <span>{l.rank}. {l.name.split(" ").pop()} <span style={{color:"#888"}}>{l.team}</span></span>
+                  <span style={{fontWeight:600}}>{l.value}</span>
+                </div>)}
+              </div>)}
+            </div>
+          </div>
+        </div>}
+
+        {boxLoading&&<div style={{textAlign:"center",padding:30,color:"#888",fontStyle:"italic",fontSize:13}}>Fetching scores...</div>}
+        {boxData&&boxData.game_count===0&&<div style={{textAlign:"center",padding:30,color:"#888",fontStyle:"italic",fontSize:13}}>No games found for {boxData.date}.</div>}
+
+        {/* 3-column game grid (CSS columns like waldrn) */}
+        {boxData&&boxData.game_count>0&&<div style={{columnCount:3,columnGap:16,marginTop:4}}>
+          {boxData.games.map(gm=>{
+            const aw=gm.away, hm=gm.home;
+            // Group innings in 3s for newspaper-style linescore
+            const maxInn=Math.max(aw.innings.length,hm.innings.length,9);
+            const grp=(inn)=>{const out=[];for(let i=0;i<maxInn;i+=3){out.push(inn.slice(i,i+3).map(v=>v!=null?v:0).join(""));}return out;};
+            return<div key={gm.game_pk} style={{breakInside:"avoid",pageBreakInside:"avoid",marginBottom:14}}>
+
+              {/* Game header */}
+              <div style={{fontWeight:700,fontSize:13,borderBottom:"1px solid #000",paddingBottom:1,marginBottom:2}}>{aw.r>=hm.r?aw.name:hm.name} {Math.max(aw.r,hm.r)}, {aw.r<hm.r?aw.name:hm.name} {Math.min(aw.r,hm.r)}</div>
+
+              {/* Team lines with score */}
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,fontWeight:700,lineHeight:1.2,marginTop:1}}>
+                <span>{aw.name}</span><span>{aw.r}</span>
+              </div>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,fontWeight:700,lineHeight:1.2}}>
+                <span>{hm.name}</span><span>{hm.r}</span>
+              </div>
+
+              {/* Linescore table */}
+              <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed",fontSize:10,lineHeight:1.1,marginTop:2}}>
+                <tbody>
+                  {[aw,hm].map(tm=><tr key={tm.abbrev}>
+                    <th style={{textAlign:"left",width:"22%",fontWeight:700,borderTop:"1px solid #000",padding:"1px 0"}}>{tm.name.split(" ").pop()}</th>
+                    {grp(tm.innings).map((g3,i)=><td key={i} style={{textAlign:"right",width:"10%",borderTop:"1px solid #000",padding:"1px 2px"}}>{g3}</td>)}
+                    <td style={{textAlign:"right",borderTop:"1px solid #000",padding:"1px 2px"}}>—</td>
+                    <td style={{textAlign:"right",fontWeight:700,borderTop:"1px solid #000",padding:"1px 2px"}}>{tm.r}</td>
+                    <td style={{textAlign:"right",borderTop:"1px solid #000",padding:"1px 2px"}}>{tm.h}</td>
+                    <td style={{textAlign:"right",borderTop:"1px solid #000",padding:"1px 2px"}}>{tm.e}</td>
+                  </tr>)}
+                </tbody>
+              </table>
+
+              {/* Batting — away then home */}
+              {[aw,hm].map(tm=><div key={tm.abbrev+"-b"}>
+                <div style={{fontSize:10,fontWeight:700,margin:"3px 0 0",borderBottom:"1px solid #000"}}>{tm.name.split(" ").pop()}</div>
+                <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed",fontSize:10,lineHeight:1.1}}>
+                  <thead><tr>
+                    <th style={{width:"30%",textAlign:"left",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>Player</th>
+                    {["AB","R","H","BI","BB","SO"].map(h=><th key={h} style={{width:"5%",textAlign:"right",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>{h}</th>)}
+                    <th style={{width:"8%",textAlign:"right",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>Avg</th>
+                  </tr></thead>
+                  <tbody>
+                    {tm.batters.map((b,i)=><tr key={i}>
+                      <td style={{textAlign:"left",whiteSpace:"nowrap",overflow:"hidden",padding:"0 0"}}>{b.name}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{b.ab}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{b.r}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{b.h}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{b.rbi}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{b.bb}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{b.so}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{b.avg}</td>
+                    </tr>)}
+                    <tr style={{fontWeight:700}}>
+                      <td style={{textAlign:"left",padding:"0 0"}}>Totals</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{tm.batters.reduce((s,b)=>s+b.ab,0)}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{tm.r}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{tm.h}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{tm.batters.reduce((s,b)=>s+b.rbi,0)}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{tm.batters.reduce((s,b)=>s+b.bb,0)}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{tm.batters.reduce((s,b)=>s+b.so,0)}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>)}
+
+              {/* Pitching — away then home */}
+              {[aw,hm].map(tm=><div key={tm.abbrev+"-p"}>
+                <div style={{fontSize:10,fontWeight:700,margin:"3px 0 0",borderBottom:"1px solid #000"}}>{tm.name.split(" ").pop()} Pitching</div>
+                <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed",fontSize:10,lineHeight:1.1}}>
+                  <thead><tr>
+                    <th style={{width:"37%",textAlign:"left",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>Pitcher</th>
+                    <th style={{width:"5%",textAlign:"right",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>IP</th>
+                    {["H","R","ER","BB","SO"].map(h=><th key={h} style={{width:"5%",textAlign:"right",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>{h}</th>)}
+                    <th style={{width:"10%",textAlign:"right",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>ERA</th>
+                  </tr></thead>
+                  <tbody>
+                    {tm.pitchers.map((p,i)=><tr key={i}>
+                      <td style={{textAlign:"left",whiteSpace:"nowrap",overflow:"hidden",padding:"0 0"}}>{p.name}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{p.ip}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{p.h}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{p.r}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{p.er}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{p.bb}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{p.so}</td>
+                      <td style={{textAlign:"right",padding:"0 0"}}>{p.era}</td>
+                    </tr>)}
+                  </tbody>
+                </table>
+              </div>)}
+
+              {/* Notes */}
+              {gm.notes&&<div style={{fontSize:10,lineHeight:1.2,padding:"3px 0",borderTop:"1px solid #000",marginTop:2}}>{gm.notes}</div>}
+            </div>})}
+        </div>}
+      </div>
+      </div>
+    </div>
+  </>}
 </div>
 </div>
 
