@@ -1,4 +1,4 @@
-"""Auth routes: register (claim team) and login."""
+"""Auth routes: register and login."""
 
 import re
 
@@ -17,6 +17,8 @@ class RegisterBody(BaseModel):
     email: str
     password: str
     team_name: str
+    first_name: str
+    last_name: str
 
 
 class LoginBody(BaseModel):
@@ -31,6 +33,12 @@ def register(body: RegisterBody):
         raise HTTPException(400, "Invalid email format")
     if len(body.password) < 6:
         raise HTTPException(400, "Password must be at least 6 characters")
+    if not body.first_name.strip():
+        raise HTTPException(400, "First name is required")
+    if not body.last_name.strip():
+        raise HTTPException(400, "Last name is required")
+    if not body.team_name.strip():
+        raise HTTPException(400, "Team name is required")
 
     sb = get_supabase()
 
@@ -41,31 +49,20 @@ def register(body: RegisterBody):
     if existing_email.data:
         raise HTTPException(409, "Email already registered")
 
-    # Check if team name exists
+    # Check if team name already taken
     existing_team = (
-        sb.table("owners")
-        .select("id, email")
-        .eq("name", body.team_name.strip())
-        .execute()
+        sb.table("owners").select("id").eq("name", body.team_name.strip()).execute()
     )
-
     if existing_team.data:
-        team = existing_team.data[0]
-        if team.get("email"):
-            raise HTTPException(409, "Team name already taken")
-        # Claim unclaimed team — attach credentials
-        sb.table("owners").update({
-            "email": email,
-            "password_hash": hash_password(body.password),
-        }).eq("id", team["id"]).execute()
-        token = create_token(team["id"])
-        return {"token": token, "owner_id": team["id"], "team_name": body.team_name.strip()}
+        raise HTTPException(409, "Team name already taken")
 
     # Create new team
     result = sb.table("owners").insert({
         "name": body.team_name.strip(),
         "email": email,
         "password_hash": hash_password(body.password),
+        "first_name": body.first_name.strip(),
+        "last_name": body.last_name.strip(),
     }).execute()
     if not result.data:
         raise HTTPException(400, "Could not create team")

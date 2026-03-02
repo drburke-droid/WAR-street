@@ -47,6 +47,8 @@ def get_owner(owner_id: int, token_owner: int = Depends(get_current_owner)):
     return OwnerDetail(
         id=o["id"],
         name=o["name"],
+        first_name=o.get("first_name"),
+        last_name=o.get("last_name"),
         budget_remaining=o["budget_remaining"],
         transactions_this_week=o["transactions_this_week"],
         total_war=float(o["total_war"] or 0),

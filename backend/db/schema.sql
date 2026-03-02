@@ -31,15 +31,19 @@ CREATE TABLE IF NOT EXISTS owners (
   name TEXT UNIQUE NOT NULL,
   email TEXT UNIQUE,
   password_hash TEXT,
+  first_name TEXT,
+  last_name TEXT,
   budget_remaining INTEGER DEFAULT 300000000,
   transactions_this_week INTEGER DEFAULT 0,
   total_war NUMERIC(5,1) DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Migration: add auth columns to existing owners table
+-- Migration: add new columns to existing owners table
 -- ALTER TABLE owners ADD COLUMN IF NOT EXISTS email TEXT UNIQUE;
 -- ALTER TABLE owners ADD COLUMN IF NOT EXISTS password_hash TEXT;
+-- ALTER TABLE owners ADD COLUMN IF NOT EXISTS first_name TEXT;
+-- ALTER TABLE owners ADD COLUMN IF NOT EXISTS last_name TEXT;
 
 -- Roster entries (shared ownership allowed — multiple owners can hold same player)
 CREATE TABLE IF NOT EXISTS roster_entries (

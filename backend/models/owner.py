@@ -4,6 +4,8 @@ from pydantic import BaseModel
 class OwnerOut(BaseModel):
     id: int
     name: str
+    first_name: str | None = None
+    last_name: str | None = None
     budget_remaining: int
     transactions_this_week: int
     total_war: float

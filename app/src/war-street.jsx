@@ -117,6 +117,11 @@ const [teamName, setTeamName] = useState("");
 const [loginError, setLoginError] = useState(null);
 const [loginEmail, setLoginEmail] = useState("");
 const [loginPassword, setLoginPassword] = useState("");
+const [regStep, setRegStep] = useState(1);
+const [firstName, setFirstName] = useState("");
+const [lastName, setLastName] = useState("");
+const [selectedCity, setSelectedCity] = useState("");
+const [cityLoading, setCityLoading] = useState(false);
 const [token, setToken] = useState(() => localStorage.getItem("warstreet_token"));
 const [ft, setFt] = useState("ALL");
 const [so, setSo] = useState("PRICE");
@@ -216,6 +221,7 @@ useEffect(() => {
 const doLogout = useCallback(() => {
   setCur(null); setToken(null); setLoginPhase("boot"); setTypedText(""); setLogoOpacity(0);
   setTeamName(""); setLoginEmail(""); setLoginPassword(""); setLoginError(null); setMenu(false);
+  setRegStep(1); setFirstName(""); setLastName(""); setSelectedCity("");
   setMe({ id:null, nm:"...", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
   setRaw([]);
 }, []);
@@ -232,10 +238,11 @@ const doLogin = async () => {
 };
 
 const doCreateTeam = async () => {
-  if (!teamName.trim() || !loginEmail.trim() || !loginPassword) return;
+  const fullTeamName = selectedCity ? `${selectedCity} ${teamName}`.trim() : teamName.trim();
+  if (!fullTeamName || !loginEmail.trim() || !loginPassword || !firstName.trim() || !lastName.trim()) return;
   setLoginError(null);
   try {
-    const res = await fetch(`${API}/auth/register`, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ email: loginEmail.trim(), password: loginPassword, team_name: teamName.trim() }) });
+    const res = await fetch(`${API}/auth/register`, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ email: loginEmail.trim(), password: loginPassword, team_name: fullTeamName, first_name: firstName.trim(), last_name: lastName.trim() }) });
     if (!res.ok) { const err = await res.json(); setLoginError(err.detail || "CREATE FAILED"); return; }
     const data = await res.json();
     setToken(data.token); setCur(data.owner_id);
@@ -336,7 +343,7 @@ setSel({...p,paid:me.r.find(x=>x.pid===p.id)?.paid});setTa("S");
 // ═══════════════════════════════════════════════════════════
 if (cur === null) {
   const loginInputStyle = {background:"transparent",border:"none",borderBottom:"1px solid currentColor",color:"inherit",fontFamily:"inherit",fontSize:"inherit",padding:"2px 4px",width:"60%",outline:"none"};
-  const clearLoginFields = () => { setLoginEmail(""); setLoginPassword(""); setTeamName(""); setLoginError(null); };
+  const clearLoginFields = () => { setLoginEmail(""); setLoginPassword(""); setTeamName(""); setLoginError(null); setRegStep(1); setFirstName(""); setLastName(""); setSelectedCity(""); };
 
   const loginMenu = (phase, setPhase) => {
     if (phase === "menu") return (
@@ -367,32 +374,94 @@ if (cur === null) {
         </div>
       </div>
     );
-    if (phase === "create") return (
-      <div style={{marginTop:12}}>
-        <div style={{marginBottom:4}}>CREATE NEW TEAM:</div>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-          <span>NAME:</span>
-          <input value={teamName} onChange={e=>setTeamName(e.target.value)} autoFocus maxLength={30}
-            style={loginInputStyle}/>
+    if (phase === "create") {
+      const goStep2 = () => {
+        if (!firstName.trim() || !lastName.trim()) { setLoginError("FIRST AND LAST NAME REQUIRED"); return; }
+        setLoginError(null); setRegStep(2);
+        setCityLoading(true);
+        fetch("http://ip-api.com/json/?fields=city,regionName")
+          .then(r=>r.json()).then(data=>{ setSelectedCity(data.city || data.regionName || ""); })
+          .catch(()=>setSelectedCity(""))
+          .finally(()=>setCityLoading(false));
+      };
+      const goStep3 = () => {
+        if (!teamName.trim()) { setLoginError("TEAM NICKNAME REQUIRED"); return; }
+        setLoginError(null); setRegStep(3);
+      };
+      const stepBack = (to) => { setLoginError(null); setRegStep(to); };
+
+      if (regStep === 1) return (
+        <div style={{marginTop:12}}>
+          <div style={{marginBottom:4}}>STEP 1/3 — YOUR NAME:</div>
+          <div style={{marginBottom:4}}>{"──────────────────────"}</div>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+            <span>FIRST:</span>
+            <input value={firstName} onChange={e=>setFirstName(e.target.value)} autoFocus maxLength={30}
+              style={loginInputStyle}/>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+            <span>LAST:</span>
+            <input value={lastName} onChange={e=>setLastName(e.target.value)} maxLength={30}
+              onKeyDown={e=>{if(e.key==="Enter")goStep2()}}
+              style={loginInputStyle}/>
+          </div>
+          {loginError&&<div style={{color:"#ff3333",marginBottom:4}}>{loginError}</div>}
+          <div style={{display:"flex",gap:8}}>
+            <span onClick={goStep2} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>[NEXT]</span>
+            <span onClick={()=>{setLoginPhase("menu");clearLoginFields()}} style={{cursor:"pointer",opacity:0.6}} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0.6}>[BACK]</span>
+          </div>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-          <span>EMAIL:</span>
-          <input value={loginEmail} onChange={e=>setLoginEmail(e.target.value)}
-            style={loginInputStyle}/>
+      );
+      if (regStep === 2) return (
+        <div style={{marginTop:12}}>
+          <div style={{marginBottom:4}}>STEP 2/3 — TEAM NAME:</div>
+          <div style={{marginBottom:4}}>{"──────────────────────"}</div>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+            <span>CITY:</span>
+            {cityLoading ? <span style={{opacity:0.5}}>DETECTING...</span> :
+              <input value={selectedCity} onChange={e=>setSelectedCity(e.target.value)} maxLength={30}
+                style={loginInputStyle} placeholder="e.g. Seattle"/>}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+            <span>TEAM:</span>
+            <span style={{opacity:0.5}}>{selectedCity ? `${selectedCity} ` : ""}</span>
+            <input value={teamName} onChange={e=>setTeamName(e.target.value)} autoFocus maxLength={30}
+              onKeyDown={e=>{if(e.key==="Enter")goStep3()}}
+              style={loginInputStyle} placeholder="e.g. Squeezes"/>
+          </div>
+          <div style={{fontSize:"inherit",opacity:0.5,marginBottom:6}}>
+            PREVIEW: {selectedCity ? `${selectedCity} ${teamName}` : teamName || "..."}
+          </div>
+          {loginError&&<div style={{color:"#ff3333",marginBottom:4}}>{loginError}</div>}
+          <div style={{display:"flex",gap:8}}>
+            <span onClick={goStep3} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>[NEXT]</span>
+            <span onClick={()=>stepBack(1)} style={{cursor:"pointer",opacity:0.6}} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0.6}>[BACK]</span>
+          </div>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-          <span>PASS:</span>
-          <input value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} type="password"
-            onKeyDown={e=>{if(e.key==="Enter")doCreateTeam()}}
-            style={loginInputStyle}/>
+      );
+      if (regStep === 3) return (
+        <div style={{marginTop:12}}>
+          <div style={{marginBottom:4}}>STEP 3/3 — CREDENTIALS:</div>
+          <div style={{marginBottom:4}}>{"──────────────────────"}</div>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+            <span>EMAIL:</span>
+            <input value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} autoFocus
+              style={loginInputStyle}/>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+            <span>PASS:</span>
+            <input value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} type="password"
+              onKeyDown={e=>{if(e.key==="Enter")doCreateTeam()}}
+              style={loginInputStyle}/>
+          </div>
+          {loginError&&<div style={{color:"#ff3333",marginBottom:4}}>{loginError}</div>}
+          <div style={{display:"flex",gap:8}}>
+            <span onClick={doCreateTeam} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>[CREATE]</span>
+            <span onClick={()=>stepBack(2)} style={{cursor:"pointer",opacity:0.6}} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0.6}>[BACK]</span>
+          </div>
         </div>
-        {loginError&&<div style={{color:"#ff3333",marginBottom:4}}>{loginError}</div>}
-        <div style={{display:"flex",gap:8}}>
-          <span onClick={doCreateTeam} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>[CREATE]</span>
-          <span onClick={()=>{setLoginPhase("menu");clearLoginFields()}} style={{cursor:"pointer",opacity:0.6}} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0.6}>[BACK]</span>
-        </div>
-      </div>
-    );
+      );
+    }
     return null;
   };
 
