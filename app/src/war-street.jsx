@@ -419,11 +419,12 @@ const th2={...pad,color:lo,textAlign:"left",borderBottom:`1px solid ${brd}`,posi
 const td2={...pad,borderBottom:`1px solid ${brd}`,fontSize:12};
 
 return (
-  <div style={{background:"#1a1a1a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",marginTop:-10,maxWidth:"100vw"}}>
+  <div style={{background:"#1a1a1a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",marginTop:-10,maxWidth:"100vw",touchAction:"none"}}>
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap');
-      html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important}
+      html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important;touch-action:none}
       .palm-screen{overflow-x:hidden !important}
+      .palm-scroll{overflow-y:auto !important;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain}
       .palm-screen::-webkit-scrollbar{width:3px}
       .palm-screen::-webkit-scrollbar-thumb{background:${lo}}
       .palm-screen::-webkit-scrollbar-track{background:${bgc}}
@@ -434,6 +435,7 @@ return (
       position:"relative",
       width: "min(105vw, calc(105vh * 768 / 1376))",
       height: "min(105vh, calc(105vw * 1376 / 768))",
+      touchAction:"none",
     }}>
       {/* LCD Screen — positioned in the transparent cutout */}
       <div className="palm-screen" style={{
@@ -496,7 +498,7 @@ return (
         </div>
 
         {/* Content */}
-        <div className="palm-screen" style={{flex:1,overflowY:"auto",overflowX:"hidden",overscrollBehavior:"contain",padding:"1px 0"}}>
+        <div className="palm-screen palm-scroll" style={{flex:1,overflowY:"auto",overflowX:"hidden",overscrollBehavior:"contain",padding:"1px 0"}}>
           {/* MARKET */}
           {vw==="MKT"&&<div>
             <div style={{display:"flex",gap:3,padding:"2px 4px",alignItems:"center",fontSize:10,flexWrap:"wrap"}}>
