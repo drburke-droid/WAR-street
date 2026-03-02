@@ -387,10 +387,10 @@ if (cur === null) {
   // ── Mobile Login ──
   const fg_m="#2d4a2d",bgc_m="#b8c8a0",brd_m="#8a9a72",lo_m="#7a8a62",vlo_m="#5a6a42";
   return (
-    <div style={{background:"#1a1a1a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",marginTop:-10,maxWidth:"100vw"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap'); @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}`}</style>
-      <div style={{position:"relative",width:"min(105vw, calc(105vh * 768 / 1376))",height:"min(105vh, calc(105vw * 1376 / 768))"}}>
-        <div style={{position:"absolute",left:"4.30%",top:"10.68%",width:"94.01%",height:"68.75%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1}}>
+    <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap'); @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important;touch-action:none}`}</style>
+      <div style={{position:"relative",width:"min(105vw, calc(105vh * 768 / 1376))",height:"min(105vh, calc(105vw * 1376 / 768))",touchAction:"none"}}>
+        <div style={{position:"absolute",left:"4.30%",top:"10.68%",width:"94.01%",height:"68.75%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1,touchAction:"none"}}>
           <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
           <div style={{position:"relative",zIndex:4,textAlign:"center",padding:"10px 16px",maxWidth:"90%"}}>
             <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:23,color:vlo_m,letterSpacing:"2px",opacity:logoOpacity}}>WAR STREET</div>
@@ -419,7 +419,7 @@ const th2={...pad,color:lo,textAlign:"left",borderBottom:`1px solid ${brd}`,posi
 const td2={...pad,borderBottom:`1px solid ${brd}`,fontSize:12};
 
 return (
-  <div style={{background:"#1a1a1a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",marginTop:-10,maxWidth:"100vw",touchAction:"none"}}>
+  <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap');
       html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important;touch-action:none}
