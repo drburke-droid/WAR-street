@@ -393,11 +393,11 @@ if (cur === null) {
         <div style={{position:"absolute",left:"4.30%",top:"10.68%",width:"94.01%",height:"68.75%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1}}>
           <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
           <div style={{position:"relative",zIndex:4,textAlign:"center",padding:"10px 16px",maxWidth:"90%"}}>
-            <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:16,color:vlo_m,letterSpacing:"1px",opacity:logoOpacity}}>WAR STREET</div>
-            <div style={{fontSize:7,color:lo_m,marginTop:2,opacity:logoOpacity}}>FANTASY BASEBALL STOCK MARKET</div>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:23,color:vlo_m,letterSpacing:"2px",opacity:logoOpacity}}>WAR STREET</div>
+            <div style={{fontSize:10,color:lo_m,marginTop:3,opacity:logoOpacity}}>FANTASY BASEBALL STOCK MARKET</div>
             {loginPhase !== "boot" && (
-              <div style={{fontSize:8,color:fg_m,textAlign:"left",marginTop:10,lineHeight:1.5}}>
-                <pre style={{margin:0,fontFamily:"inherit",whiteSpace:"pre-wrap",fontSize:8}}>{typedText}<span style={{animation:"blink 1s step-end infinite"}}>█</span></pre>
+              <div style={{fontSize:12,color:fg_m,textAlign:"left",marginTop:12,lineHeight:1.5}}>
+                <pre style={{margin:0,fontFamily:"inherit",whiteSpace:"pre-wrap",fontSize:12}}>{typedText}<span style={{animation:"blink 1s step-end infinite"}}>█</span></pre>
                 {loginMenu(loginPhase, setLoginPhase)}
               </div>
             )}
