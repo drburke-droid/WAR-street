@@ -440,11 +440,17 @@ const th2_d={...pad_d,color:dim,textAlign:"left",borderBottom:`1px solid ${brd_d
 const td2_d={...pad_d,borderBottom:`1px solid #161616`};
 
 return(
-<div style={{background:bg,color:g,minHeight:"100vh",fontFamily:"'VT323',monospace",fontSize:20}}>
-<style>{`@import url('https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@800&display=swap'); *{box-sizing:border-box} *::-webkit-scrollbar{width:6px} *::-webkit-scrollbar-thumb{background:#2a2a2a} *::-webkit-scrollbar-track{background:${bg}} tr:hover td{background:#111 !important} ::selection{background:${g};color:${bg}} input::placeholder{color:#333} .crt::before{content:"";position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt::after{content:"";position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999}`}</style>
-<div className="crt">
+<div style={{background:"#2a2520",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+<style>{`@import url('https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@800&display=swap'); *{box-sizing:border-box} .crt-screen *::-webkit-scrollbar{width:0;display:none} .crt-screen>.crt-scroll::-webkit-scrollbar{width:8px;display:block} .crt-screen>.crt-scroll::-webkit-scrollbar-thumb{background:#555;border-radius:3px} .crt-screen>.crt-scroll::-webkit-scrollbar-track{background:#1a1a1a} .crt-screen tr:hover td{background:#111 !important} .crt-screen ::selection{background:${g};color:${bg}} .crt-screen input::placeholder{color:#333} .crt-screen .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-screen .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999}`}</style>
+
+{/* Monitor container */}
+<div style={{position:"relative",width:"min(100vw, calc(100vh * 1080 / 608))",height:"min(100vh, calc(100vw * 608 / 1080))"}}>
+  {/* Screen area — positioned in the transparent cutout */}
+  <div className="crt-screen" style={{position:"absolute",left:"28.70%",top:"2.80%",width:"46.67%",height:"68.26%",borderRadius:6,background:bg,overflow:"hidden",zIndex:1}}>
+    <div className="crt-scroll" style={{width:"100%",height:"100%",overflow:"auto",color:g,fontFamily:"'VT323',monospace",fontSize:20,position:"relative"}}>
+      <div className="crt" style={{position:"relative",minHeight:"100%"}}>
 {/* Flash */}
-{msg&&<div style={{position:"fixed",top:0,left:0,right:0,padding:"4px 16px",background:msg.e==="E"?"#331111":"#113311",color:msg.e==="E"?neg:g,zIndex:2000,fontSize:18,textAlign:"center",borderBottom:`1px solid ${msg.e==="E"?neg:g}`}}>{msg.m}</div>}
+{msg&&<div style={{position:"absolute",top:0,left:0,right:0,padding:"4px 16px",background:msg.e==="E"?"#331111":"#113311",color:msg.e==="E"?neg:g,zIndex:2000,fontSize:18,textAlign:"center",borderBottom:`1px solid ${msg.e==="E"?neg:g}`}}>{msg.m}</div>}
 
     {/* Header */}
     <div style={{padding:"6px 12px",borderBottom:`1px solid ${brd_d}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -501,7 +507,7 @@ return(
             <span key={v} onClick={()=>setSo(v)} style={{cursor:"pointer",color:so===v?bg:dim,background:so===v?g:"transparent",padding:"1px 8px"}}>{v}</span>)}
           <input value={q} onChange={e=>setQ(e.target.value)} placeholder="> search" style={{marginLeft:"auto",background:"transparent",border:`1px solid ${brd_d}`,color:g,fontFamily:"inherit",fontSize:16,padding:"2px 8px",width:180}}/>
         </div>
-        <div style={{maxHeight:"calc(100vh - 200px)",overflowY:"auto",overflowX:"auto"}}>
+        <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",minWidth:750,tableLayout:"fixed"}}>
             <thead><tr>
               <th style={{...th2_d,position:"sticky",left:0,zIndex:3,background:bg,width:110}}>PLAYER</th>
@@ -597,7 +603,7 @@ return(
     </div>
 
     {/* Modal */}
-    {sel&&(<div onClick={()=>setSel(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"}}>
+    {sel&&(<div onClick={()=>setSel(null)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:bg,border:`1px solid ${g}`,padding:"20px 28px",minWidth:320}}>
         <div style={{color:amb,fontSize:26,marginBottom:6}}>{ta==="B"?"BUY":"SELL"}</div>
         <div style={{color:wh,fontSize:26,marginBottom:2}}>{sel.nm}</div>
@@ -636,7 +642,13 @@ return(
         <div style={{color:"#222",marginTop:6,fontSize:20}}>{MAX_TX-me.tx} tx remaining</div>
       </div>
     </div>)}
+      </div>
+    </div>
   </div>
+
+  {/* Monitor frame overlay */}
+  <img src="/WAR-street/monitor-frame.png" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:2}}/>
+</div>
 </div>
 
 );
