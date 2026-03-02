@@ -469,16 +469,16 @@ if (cur === null) {
   // ── Desktop Login ──
   if (!isMobile) return (
     <div style={{background:"#2a2520",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@800&display=swap'); *{box-sizing:border-box} @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} .crt-login .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-login .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&display=swap'); @import url('https://fonts.cdnfonts.com/css/perfect-dos-vga-437'); *{box-sizing:border-box} @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} .crt-login .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-login .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999}`}</style>
       <div style={{position:"relative",width:"min(100vw, calc(100vh * 1080 / 608))",height:"min(100vh, calc(100vw * 608 / 1080))"}}>
         <div className="crt-login" style={{position:"absolute",left:"28.70%",top:"2.80%",width:"46.67%",height:"68.26%",borderRadius:6,background:"#0a0a0a",overflow:"hidden",zIndex:1}}>
           <div style={{width:"100%",height:"100%",overflow:"auto",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
             <div className="crt" style={{position:"absolute",inset:0,pointerEvents:"none"}}/>
             <div style={{position:"relative",zIndex:1001,textAlign:"center",padding:"20px 30px",maxWidth:420}}>
               <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:48,color:"#ff9900",letterSpacing:"3px",opacity:logoOpacity,transition:"none",textShadow:"0 0 20px rgba(255,153,0,0.3)"}}>WAR STREET</div>
-              <div style={{fontFamily:"'VT323',monospace",fontSize:16,color:"#555",marginTop:4,letterSpacing:"2px",opacity:logoOpacity}}>FANTASY BASEBALL STOCK MARKET</div>
+              <div style={{fontFamily:"'Perfect DOS VGA 437',monospace",fontSize:16,color:"#555",marginTop:4,letterSpacing:"2px",opacity:logoOpacity}}>FANTASY BASEBALL STOCK MARKET</div>
               {loginPhase !== "boot" && (
-                <div style={{fontFamily:"'VT323',monospace",fontSize:20,color:"#33ff33",textAlign:"left",marginTop:20,lineHeight:1.4}}>
+                <div style={{fontFamily:"'Perfect DOS VGA 437',monospace",fontSize:20,color:"#33ff33",textAlign:"left",marginTop:20,lineHeight:1.4}}>
                   <pre style={{margin:0,fontFamily:"inherit",whiteSpace:"pre-wrap"}}>{typedText}<span style={{animation:"blink 1s step-end infinite"}}>█</span></pre>
                   {loginMenu(loginPhase, setLoginPhase)}
                 </div>
@@ -770,16 +770,59 @@ return (
     {/* Mobile newspaper overlay — at viewport level, outside Palm container */}
     {showPaper&&<>
       <div onClick={()=>setShowPaper(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:100}}/>
-      <div style={{position:"fixed",left:"3%",top:"2%",width:"94%",height:"96%",zIndex:101,background:"#fff",borderRadius:2,boxShadow:"0 8px 40px rgba(0,0,0,0.7)",display:"flex",flexDirection:"column",fontFamily:"'Source Sans 3','Segoe UI',sans-serif",color:"#1a1a1a",overflow:"hidden"}}>
-        <div style={{position:"absolute",inset:0,backgroundImage:"url(/WAR-street/newsprint-texture.jpg)",backgroundSize:"cover",opacity:0.35,pointerEvents:"none",zIndex:0}}/>
+      <div style={{position:"fixed",left:"3%",top:"2%",width:"94%",height:"96%",zIndex:101,background:"#ddd5c3",borderRadius:2,boxShadow:"0 8px 40px rgba(0,0,0,0.7)",display:"flex",flexDirection:"column",fontFamily:"'Source Sans 3','Segoe UI',sans-serif",color:"#1a1a1a",overflow:"hidden"}}>
+        <div style={{position:"absolute",inset:0,backgroundImage:"url(/WAR-street/newsprint-texture.jpg)",backgroundSize:"cover",opacity:0.55,pointerEvents:"none",zIndex:0}}/>
+        <div style={{position:"absolute",inset:0,background:"repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0px,transparent 1px,transparent 2px),repeating-linear-gradient(90deg,rgba(0,0,0,0.02) 0px,transparent 1px,transparent 3px)",pointerEvents:"none",zIndex:0}}/>
         <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",height:"100%"}}>
-        <div style={{borderBottom:"2px solid #000",padding:"10px 12px 6px",flexShrink:0,textAlign:"center",position:"relative"}}>
-          <div onClick={()=>setShowPaper(false)} style={{position:"absolute",right:8,top:6,cursor:"pointer",fontSize:28,color:"#444",fontFamily:"sans-serif",lineHeight:1,padding:"4px 10px",zIndex:2}}>✕</div>
-          <div style={{fontStyle:"italic",fontSize:9,color:"#555",marginBottom:2}}>{boxData ? boxData.date : "..."}</div>
-          <div style={{fontFamily:"'Rojal','Georgia',serif",fontSize:28,fontWeight:400,letterSpacing:-0.5,margin:"4px 0",lineHeight:1.1}}>THE W<span style={{fontSize:"50%"}}>.</span>A<span style={{fontSize:"50%"}}>.</span>R<span style={{fontSize:"50%"}}>.</span> STREET JOURNAL</div>
-          <div style={{fontSize:10,margin:"2px 0 3px",color:"#333",letterSpacing:2}}>BASEBALL SCORES</div>
+        <div style={{padding:"6px 10px 0",flexShrink:0,textAlign:"center",position:"relative"}}>
+          <div onClick={()=>setShowPaper(false)} style={{position:"absolute",right:6,top:4,cursor:"pointer",fontSize:24,color:"#444",fontFamily:"sans-serif",lineHeight:1,padding:"4px 8px",zIndex:2}}>✕</div>
+          <div style={{borderTop:"2px solid #000",borderBottom:"1px solid #000",height:3,marginBottom:3}}/>
+          <div style={{fontFamily:"'Rojal','Georgia',serif",fontSize:28,fontWeight:400,letterSpacing:-0.5,margin:"2px 0",lineHeight:1.1}}>THE W<span style={{fontSize:"50%"}}>.</span>A<span style={{fontSize:"50%"}}>.</span>R<span style={{fontSize:"50%"}}>.</span> STREET JOURNAL</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"3px 0 4px",fontSize:8,color:"#444"}}>
+            <span style={{fontStyle:"italic"}}>{boxData?(()=>{const d=new Date(boxData.date+"T12:00:00");return d.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})})():"..."}</span>
+            <span style={{letterSpacing:1,fontWeight:700,fontSize:8}}>BASEBALL SCORES</span>
+            <span>B14</span>
+          </div>
+          <div style={{borderTop:"1px solid #000",borderBottom:"1px solid #000",height:2}}/>
         </div>
         <div style={{flex:1,overflow:"auto",padding:"8px 10px",WebkitOverflowScrolling:"touch"}}>
+          {/* Fantasy: Team Rankings + Top Movers */}
+          <div style={{borderBottom:"2px solid #000",paddingBottom:4,marginBottom:4}}>
+            <div style={{display:"flex",gap:10}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:9,fontWeight:700,letterSpacing:1,borderBottom:"1px solid #000",paddingBottom:1,marginBottom:2}}>TEAM RANKINGS</div>
+                {(()=>{
+                  const sorted=[...lb].sort((a,b)=>b.w-a.w);
+                  const top10=sorted.slice(0,10);
+                  const myRank=sorted.findIndex(o=>o.id===cur);
+                  const myInTop=myRank>=0&&myRank<10;
+                  return<>
+                    {top10.map((o,i)=><div key={o.id} style={{fontSize:8,lineHeight:1.3,display:"flex",justifyContent:"space-between",fontWeight:o.id===cur?700:400}}>
+                      <span>{i+1}. {o.nm}</span>
+                      <span style={{fontWeight:600}}>{o.w.toFixed(1)}</span>
+                    </div>)}
+                    {!myInTop&&myRank>=0&&<>
+                      <div style={{fontSize:8,color:"#888",textAlign:"center",lineHeight:1.4}}>...</div>
+                      <div style={{fontSize:8,lineHeight:1.3,display:"flex",justifyContent:"space-between",fontWeight:700}}>
+                        <span>{myRank+1}. {sorted[myRank].nm}</span>
+                        <span style={{fontWeight:600}}>{sorted[myRank].w.toFixed(1)}</span>
+                      </div>
+                    </>}
+                  </>;
+                })()}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:9,fontWeight:700,letterSpacing:1,borderBottom:"1px solid #000",paddingBottom:1,marginBottom:2}}>TOP MOVERS</div>
+                {(()=>{
+                  const movers=[...raw].filter(p=>p.prH&&p.prH.length>1).map(p=>({nm:p.nm,tm:p.tm,chg:p.c-p.prH[0]})).sort((a,b)=>b.chg-a.chg).slice(0,10);
+                  return movers.map((p,i)=><div key={i} style={{fontSize:8,lineHeight:1.3,display:"flex",justifyContent:"space-between"}}>
+                    <span>{i+1}. {p.nm}</span>
+                    <span style={{fontWeight:600}}>{p.chg>=0?"+":""}{f$(p.chg)}</span>
+                  </div>);
+                })()}
+              </div>
+            </div>
+          </div>
           {leaders&&leaders.categories&&leaders.categories.length>0&&<div style={{borderBottom:"2px solid #000",paddingBottom:4,marginBottom:4}}>
             <div style={{display:"flex",gap:10}}>
               <div style={{flex:1}}>
@@ -898,13 +941,13 @@ const td2_d={...pad_d,borderBottom:`1px solid #161616`};
 
 return(
 <div style={{background:"#2a2520",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-<style>{`@import url('https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@800&family=Source+Sans+3:wght@200..900&display=swap'); @import url('https://fonts.cdnfonts.com/css/rojal'); *{box-sizing:border-box} .crt-screen *::-webkit-scrollbar{width:0;display:none} .crt-screen>.crt-scroll::-webkit-scrollbar{width:8px;display:block} .crt-screen>.crt-scroll::-webkit-scrollbar-thumb{background:#555;border-radius:3px} .crt-screen>.crt-scroll::-webkit-scrollbar-track{background:#1a1a1a} .crt-screen tr:hover td{background:#111 !important} .crt-screen ::selection{background:${g};color:${bg}} .crt-screen input::placeholder{color:#333} .crt-screen .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-screen .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999} .np-scroll::-webkit-scrollbar{width:6px} .np-scroll::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px} .np-scroll::-webkit-scrollbar-track{background:transparent} .np-scroll table{border-collapse:collapse;table-layout:fixed;width:100%} .np-scroll td,.np-scroll th{overflow:hidden}`}</style>
+<style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Source+Sans+3:wght@200..900&display=swap'); @import url('https://fonts.cdnfonts.com/css/rojal'); @import url('https://fonts.cdnfonts.com/css/perfect-dos-vga-437'); *{box-sizing:border-box} .crt-screen *::-webkit-scrollbar{width:0;display:none} .crt-screen>.crt-scroll::-webkit-scrollbar{width:8px;display:block} .crt-screen>.crt-scroll::-webkit-scrollbar-thumb{background:#555;border-radius:3px} .crt-screen>.crt-scroll::-webkit-scrollbar-track{background:#1a1a1a} .crt-screen tr:hover td{background:#111 !important} .crt-screen ::selection{background:${g};color:${bg}} .crt-screen input::placeholder{color:#333} .crt-screen .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-screen .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999} .np-scroll::-webkit-scrollbar{width:6px} .np-scroll::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px} .np-scroll::-webkit-scrollbar-track{background:transparent} .np-scroll table{border-collapse:collapse;table-layout:fixed;width:100%} .np-scroll td,.np-scroll th{overflow:hidden}`}</style>
 
 {/* Monitor container */}
 <div style={{position:"relative",width:"min(100vw, calc(100vh * 1080 / 608))",height:"min(100vh, calc(100vw * 608 / 1080))"}}>
   {/* Screen area — positioned in the transparent cutout */}
   <div className="crt-screen" style={{position:"absolute",left:"28.70%",top:"2.80%",width:"46.67%",height:"68.26%",borderRadius:6,background:bg,overflow:"hidden",zIndex:1}}>
-    <div className="crt-scroll" style={{width:"100%",height:"100%",overflow:"auto",color:g,fontFamily:"'VT323',monospace",fontSize:20,position:"relative"}}>
+    <div className="crt-scroll" style={{width:"100%",height:"100%",overflow:"auto",color:g,fontFamily:"'Perfect DOS VGA 437',monospace",fontSize:17,position:"relative"}}>
       <div className="crt" style={{position:"relative",minHeight:"100%"}}>
 {/* Flash */}
 {msg&&<div style={{position:"absolute",top:0,left:0,right:0,padding:"4px 16px",background:msg.e==="E"?"#331111":"#113311",color:msg.e==="E"?neg:g,zIndex:2000,fontSize:18,textAlign:"center",borderBottom:`1px solid ${msg.e==="E"?neg:g}`}}>{msg.m}</div>}
@@ -983,8 +1026,8 @@ return(
                   <tr key={p.id} style={{background:mine?"#081208":"transparent"}}>
                     <td style={{...td2_d,color:mine?amb:wh,position:"sticky",left:0,background:mine?"#081208":bg,zIndex:1}}>{p.nm}</td>
                     <td style={{...td2_d,textAlign:"center"}}>
-                      {mine?<span onClick={()=>openSell(p)} style={{cursor:"pointer",background:neg,color:bg,padding:"1px 8px",fontWeight:700,fontSize:14}}>SELL</span>
-                      :ok?<span onClick={()=>openBuy(p)} style={{cursor:"pointer",background:g,color:bg,padding:"1px 8px",fontWeight:700,fontSize:14}}>BUY</span>
+                      {mine?<span onClick={()=>openSell(p)} style={{cursor:"pointer",background:neg,color:bg,padding:"1px 0",fontWeight:700,fontSize:14,display:"inline-block",width:44,textAlign:"center"}}>SELL</span>
+                      :ok?<span onClick={()=>openBuy(p)} style={{cursor:"pointer",background:g,color:bg,padding:"1px 0",fontWeight:700,fontSize:14,display:"inline-block",width:44,textAlign:"center"}}>BUY</span>
                       :<span style={{color:"#1a1a1a"}}>---</span>}
                     </td>
                     <td style={{...td2_d,color:dim}}>{p.tm}</td>
@@ -1010,7 +1053,16 @@ return(
       {/* PORTFOLIO */}
       {vw==="PORT"&&(<div>
         <div style={{color:dim,marginBottom:6,fontSize:18}}>ROSTER -- {me.nm}</div>
-        <table style={{width:"100%",borderCollapse:"collapse"}}>
+        {me.r.length===0?<div style={{padding:"8px 0",lineHeight:1.8}}>
+          <div style={{color:amb,marginBottom:6}}>WELCOME TO WAR STREET</div>
+          <div style={{color:wh,marginBottom:4}}>Buy and sell MLB players like stocks. Prices move with on-field performance and demand.</div>
+          <div style={{marginBottom:4}}><span style={{color:amb}}>BUDGET</span> <span style={{color:wh}}>${BUDGET/1e6}M to fill 13 roster slots</span></div>
+          <div style={{marginBottom:4}}><span style={{color:amb}}>GOAL</span> <span style={{color:wh}}>Highest cumulative WAR at season end wins</span></div>
+          <div style={{marginBottom:4}}><span style={{color:amb}}>TX</span> <span style={{color:wh}}>{MAX_TX} transactions per week (buy or sell)</span></div>
+          <div style={{marginBottom:8}}><span style={{color:amb}}>Check the newspaper below the monitor for yesterday's box scores and standings.</span></div>
+          <div><span onClick={()=>setVw("MKT")} style={{cursor:"pointer",color:bg,background:g,padding:"2px 12px",fontWeight:700}}>&gt; GO TO MARKET</span></div>
+        </div>
+        :<table style={{width:"100%",borderCollapse:"collapse"}}>
           <thead><tr>{["SLOT","PLAYER","TM","PRICE","PAID","P/L","WAR",""].map((h,i)=><th key={h} style={th2_d}>{h}</th>)}</tr></thead>
           <tbody>
             {rE.map(({slot:s,p,paid})=>{
@@ -1027,7 +1079,7 @@ return(
                 <td style={td2_d}><span onClick={()=>openSell(p)} style={{cursor:"pointer",background:neg,color:bg,padding:"1px 8px",fontWeight:700,fontSize:14}}>SELL</span></td>
               </tr>)})}
           </tbody>
-        </table>
+        </table>}
       </div>)}
 
       {/* STANDINGS */}
@@ -1103,30 +1155,41 @@ return(
   <img src="/WAR-street/monitor-frame.png" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:2}}/>
 
   {/* Newspaper hotspot — clickable area over the newspaper in the desk image */}
-  <div onClick={openPaper} style={{position:"absolute",left:"0%",top:"69.9%",width:"100%",height:"30.1%",zIndex:3,cursor:"pointer"}} title="Yesterday's Box Scores"/>
+  {/* Newspaper hotspot — right-angle triangle: left edge 15% up from bottom-left, to bottom-center */}
+  <div onClick={openPaper} style={{position:"absolute",left:0,bottom:0,width:"50%",height:"15%",zIndex:3,cursor:"pointer",clipPath:"polygon(0 0, 0 100%, 100% 100%)"}} title="Yesterday's Box Scores"/>
 
   {/* Newspaper overlay */}
   {showPaper&&<>
     {/* Backdrop */}
     <div onClick={()=>setShowPaper(false)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.55)",zIndex:9}}/>
     {/* Newspaper — waldrn.com layout + newsprint texture */}
-    <div style={{position:"absolute",left:"8%",top:"2%",width:"84%",height:"94%",zIndex:10,background:"#fff",borderRadius:1,boxShadow:"0 8px 40px rgba(0,0,0,0.7)",display:"flex",flexDirection:"column",fontFamily:"'Source Sans 3','Segoe UI',sans-serif",color:"#1a1a1a",overflow:"hidden"}}>
+    <div style={{position:"absolute",left:"8%",top:"2%",width:"84%",height:"94%",zIndex:10,background:"#ddd5c3",borderRadius:1,boxShadow:"0 8px 40px rgba(0,0,0,0.7)",display:"flex",flexDirection:"column",fontFamily:"'Source Sans 3','Segoe UI',sans-serif",color:"#1a1a1a",overflow:"hidden"}}>
       {/* Newsprint texture overlay */}
-      <div style={{position:"absolute",inset:0,backgroundImage:"url(/WAR-street/newsprint-texture.jpg)",backgroundSize:"cover",opacity:0.35,pointerEvents:"none",zIndex:0}}/>
+      <div style={{position:"absolute",inset:0,backgroundImage:"url(/WAR-street/newsprint-texture.jpg)",backgroundSize:"cover",opacity:0.55,pointerEvents:"none",zIndex:0}}/>
+      <div style={{position:"absolute",inset:0,background:"repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0px,transparent 1px,transparent 2px),repeating-linear-gradient(90deg,rgba(0,0,0,0.02) 0px,transparent 1px,transparent 3px),repeating-linear-gradient(45deg,rgba(0,0,0,0.01) 0px,transparent 1px,transparent 6px)",pointerEvents:"none",zIndex:0}}/>
+      <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 30% 20%,rgba(180,160,120,0.15),transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(160,140,100,0.12),transparent 50%)",pointerEvents:"none",zIndex:0}}/>
       {/* Content (above texture) */}
       <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",height:"100%"}}>
       {/* Masthead */}
-      <div style={{borderBottom:"3px solid #000",padding:"12px 16px 8px",flexShrink:0,textAlign:"center",position:"relative"}}>
-        <div onClick={()=>setShowPaper(false)} style={{position:"absolute",right:10,top:8,cursor:"pointer",fontSize:18,color:"#888",fontFamily:"sans-serif",lineHeight:1}}>✕</div>
-        <div style={{fontStyle:"italic",fontSize:10,color:"#555",marginBottom:3}}>{boxData ? boxData.date : "..."}</div>
-        <div style={{fontFamily:"'Rojal','Georgia',serif",fontSize:90,fontWeight:400,letterSpacing:-1,margin:"6px 0",lineHeight:1}}>THE W<span style={{fontSize:"50%"}}>.</span>A<span style={{fontSize:"50%"}}>.</span>R<span style={{fontSize:"50%"}}>.</span> STREET JOURNAL</div>
-        <div style={{fontSize:13,margin:"4px 0 6px",color:"#333",letterSpacing:3}}>BASEBALL SCORES</div>
+      <div style={{padding:"10px 16px 0",flexShrink:0,textAlign:"center",position:"relative"}}>
+        <div onClick={()=>setShowPaper(false)} style={{position:"absolute",right:10,top:8,cursor:"pointer",fontSize:18,color:"#888",fontFamily:"sans-serif",lineHeight:1,zIndex:2}}>✕</div>
+        {/* Top rule */}
+        <div style={{borderTop:"2px solid #000",borderBottom:"1px solid #000",height:4,marginBottom:4}}/>
+        <div style={{fontFamily:"'Rojal','Georgia',serif",fontSize:90,fontWeight:400,letterSpacing:-1,margin:"2px 0",lineHeight:1}}>THE W<span style={{fontSize:"50%"}}>.</span>A<span style={{fontSize:"50%"}}>.</span>R<span style={{fontSize:"50%"}}>.</span> STREET JOURNAL</div>
+        {/* Subhead + info row */}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"4px 0 6px",fontSize:10,color:"#444"}}>
+          <span style={{fontStyle:"italic"}}>{boxData?(()=>{const d=new Date(boxData.date+"T12:00:00");return d.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})})():"..."}</span>
+          <span style={{letterSpacing:2,fontWeight:700,fontSize:11}}>BASEBALL SCORES</span>
+          <span>B14</span>
+        </div>
+        {/* Bottom rule */}
+        <div style={{borderTop:"1px solid #000",borderBottom:"1px solid #000",height:2}}/>
       </div>
 
       {/* Scrollable body */}
       <div className="np-scroll" style={{flex:1,overflow:"auto",padding:"8px 14px"}}>
 
-        {/* League Leaders */}
+        {/* League Leaders + Fantasy Rankings + Top Movers */}
         {leaders&&leaders.categories&&leaders.categories.length>0&&<div style={{borderBottom:"2px solid #000",paddingBottom:6,marginBottom:6}}>
           <div style={{display:"flex",gap:16}}>
             {/* Batting column */}
@@ -1151,6 +1214,41 @@ return(
                 </div>)}
               </div>)}
             </div>
+            {/* Fantasy Team Rankings by WAR */}
+            <div style={{flex:1}}>
+              <div style={{fontSize:11,fontWeight:700,letterSpacing:1,borderBottom:"1px solid #000",paddingBottom:1,marginBottom:3}}>TEAM RANKINGS</div>
+              {(()=>{
+                const sorted=[...lb].sort((a,b)=>b.w-a.w);
+                const top20=sorted.slice(0,20);
+                const myRank=sorted.findIndex(o=>o.id===cur);
+                const myInTop=myRank>=0&&myRank<20;
+                return<>
+                  {top20.map((o,i)=><div key={o.id} style={{fontSize:10,lineHeight:1.3,display:"flex",justifyContent:"space-between",fontWeight:o.id===cur?700:400}}>
+                    <span>{i+1}. {o.nm}</span>
+                    <span style={{fontWeight:600}}>{o.w.toFixed(1)}</span>
+                  </div>)}
+                  {!myInTop&&myRank>=0&&<>
+                    <div style={{fontSize:10,color:"#888",textAlign:"center",lineHeight:1.6}}>...</div>
+                    <div style={{fontSize:10,lineHeight:1.3,display:"flex",justifyContent:"space-between",fontWeight:700}}>
+                      <span>{myRank+1}. {sorted[myRank].nm}</span>
+                      <span style={{fontWeight:600}}>{sorted[myRank].w.toFixed(1)}</span>
+                    </div>
+                  </>}
+                </>;
+              })()}
+            </div>
+            {/* Most Appreciated Players */}
+            <div style={{flex:1}}>
+              <div style={{fontSize:11,fontWeight:700,letterSpacing:1,borderBottom:"1px solid #000",paddingBottom:1,marginBottom:3}}>TOP MOVERS</div>
+              <div style={{fontSize:9,fontWeight:700,borderBottom:"1px solid #ccc",paddingBottom:1,marginBottom:2}}>Since Opening Day</div>
+              {(()=>{
+                const movers=[...raw].filter(p=>p.prH&&p.prH.length>1).map(p=>({nm:p.nm,tm:p.tm,chg:p.c-p.prH[0]})).sort((a,b)=>b.chg-a.chg).slice(0,20);
+                return movers.map((p,i)=><div key={i} style={{fontSize:10,lineHeight:1.3,display:"flex",justifyContent:"space-between"}}>
+                  <span>{i+1}. {p.nm} <span style={{color:"#888"}}>{p.tm}</span></span>
+                  <span style={{fontWeight:600}}>{p.chg>=0?"+":""}{f$(p.chg)}</span>
+                </div>);
+              })()}
+            </div>
           </div>
         </div>}
 
@@ -1158,7 +1256,7 @@ return(
         {boxData&&boxData.game_count===0&&<div style={{textAlign:"center",padding:30,color:"#888",fontStyle:"italic",fontSize:13}}>No games found for {boxData.date}.</div>}
 
         {/* 3-column game grid (CSS columns like waldrn) */}
-        {boxData&&boxData.game_count>0&&<div style={{columnCount:3,columnGap:16,marginTop:4}}>
+        {boxData&&boxData.game_count>0&&<div style={{columnCount:4,columnGap:14,marginTop:4}}>
           {boxData.games.map(gm=>{
             const aw=gm.away, hm=gm.home;
             // Group innings in 3s for newspaper-style linescore
