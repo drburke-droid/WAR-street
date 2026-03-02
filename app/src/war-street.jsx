@@ -220,8 +220,8 @@ return (
     {/* Palm Device — real image frame */}
     <div style={{
       position:"relative",
-      width: "min(100vw, calc(100vh * 768 / 1376))",
-      height: "min(100vh, calc(100vw * 1376 / 768))",
+      width: "min(105vw, calc(105vh * 768 / 1376))",
+      height: "min(105vh, calc(105vw * 1376 / 768))",
     }}>
       {/* LCD Screen — positioned in the transparent cutout */}
       <div className="palm-screen" style={{
