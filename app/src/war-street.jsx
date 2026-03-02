@@ -528,6 +528,7 @@ return (
   <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap');
+      @import url('https://fonts.cdnfonts.com/css/rojal');
       html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important;touch-action:none}
       .palm-screen{overflow-x:hidden !important}
       .palm-scroll{overflow-y:auto !important;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain}
@@ -722,7 +723,127 @@ return (
         pointerEvents:"none",
         zIndex:2,
       }}/>
+
+      {/* Newspaper button hotspot — leftmost physical button on Palm */}
+      <div onClick={openPaper} style={{position:"absolute",left:"8%",top:"82%",width:"18%",height:"7%",zIndex:3,cursor:"pointer"}} title="Yesterday's Box Scores"/>
     </div>
+
+    {/* Mobile newspaper overlay — at viewport level, outside Palm container */}
+    {showPaper&&<>
+      <div onClick={()=>setShowPaper(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:100}}/>
+      <div style={{position:"fixed",left:"3%",top:"2%",width:"94%",height:"96%",zIndex:101,background:"#fff",borderRadius:2,boxShadow:"0 8px 40px rgba(0,0,0,0.7)",display:"flex",flexDirection:"column",fontFamily:"'Source Sans 3','Segoe UI',sans-serif",color:"#1a1a1a",overflow:"hidden"}}>
+        <div style={{position:"absolute",inset:0,backgroundImage:"url(/WAR-street/newsprint-texture.jpg)",backgroundSize:"cover",opacity:0.35,pointerEvents:"none",zIndex:0}}/>
+        <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",height:"100%"}}>
+        <div style={{borderBottom:"2px solid #000",padding:"10px 12px 6px",flexShrink:0,textAlign:"center",position:"relative"}}>
+          <div onClick={()=>setShowPaper(false)} style={{position:"absolute",right:8,top:6,cursor:"pointer",fontSize:28,color:"#444",fontFamily:"sans-serif",lineHeight:1,padding:"4px 10px",zIndex:2}}>✕</div>
+          <div style={{fontStyle:"italic",fontSize:9,color:"#555",marginBottom:2}}>{boxData ? boxData.date : "..."}</div>
+          <div style={{fontFamily:"'Rojal','Georgia',serif",fontSize:28,fontWeight:400,letterSpacing:-0.5,margin:"4px 0",lineHeight:1.1}}>THE W<span style={{fontSize:"50%"}}>.</span>A<span style={{fontSize:"50%"}}>.</span>R<span style={{fontSize:"50%"}}>.</span> STREET JOURNAL</div>
+          <div style={{fontSize:10,margin:"2px 0 3px",color:"#333",letterSpacing:2}}>BASEBALL SCORES</div>
+        </div>
+        <div style={{flex:1,overflow:"auto",padding:"8px 10px",WebkitOverflowScrolling:"touch"}}>
+          {leaders&&leaders.categories&&leaders.categories.length>0&&<div style={{borderBottom:"2px solid #000",paddingBottom:4,marginBottom:4}}>
+            <div style={{display:"flex",gap:10}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:10,fontWeight:700,letterSpacing:1,borderBottom:"1px solid #000",paddingBottom:1,marginBottom:2}}>BATTING</div>
+                {leaders.categories.filter(c=>c.stat_group==="hitting").map(cat=><div key={cat.category} style={{marginBottom:3}}>
+                  <div style={{fontSize:9,fontWeight:700,borderBottom:"1px solid #ccc",paddingBottom:1,marginBottom:1}}>{cat.category}</div>
+                  {cat.leaders.map(l=><div key={l.rank} style={{fontSize:9,lineHeight:1.3,display:"flex",justifyContent:"space-between"}}>
+                    <span>{l.rank}. {l.name.split(" ").pop()} <span style={{color:"#888"}}>{l.team}</span></span>
+                    <span style={{fontWeight:600}}>{l.value}</span>
+                  </div>)}
+                </div>)}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:10,fontWeight:700,letterSpacing:1,borderBottom:"1px solid #000",paddingBottom:1,marginBottom:2}}>PITCHING</div>
+                {leaders.categories.filter(c=>c.stat_group==="pitching").map(cat=><div key={cat.category} style={{marginBottom:3}}>
+                  <div style={{fontSize:9,fontWeight:700,borderBottom:"1px solid #ccc",paddingBottom:1,marginBottom:1}}>{cat.category}</div>
+                  {cat.leaders.map(l=><div key={l.rank} style={{fontSize:9,lineHeight:1.3,display:"flex",justifyContent:"space-between"}}>
+                    <span>{l.rank}. {l.name.split(" ").pop()} <span style={{color:"#888"}}>{l.team}</span></span>
+                    <span style={{fontWeight:600}}>{l.value}</span>
+                  </div>)}
+                </div>)}
+              </div>
+            </div>
+          </div>}
+          {boxLoading&&<div style={{textAlign:"center",padding:20,color:"#888",fontStyle:"italic",fontSize:12}}>Fetching scores...</div>}
+          {boxData&&boxData.game_count===0&&<div style={{textAlign:"center",padding:20,color:"#888",fontStyle:"italic",fontSize:12}}>No games found for {boxData.date}.</div>}
+          {boxData&&boxData.game_count>0&&<div style={{columnCount:2,columnGap:12,marginTop:2}}>
+            {boxData.games.map(gm=>{
+              const aw=gm.away, hm=gm.home;
+              const maxInn=Math.max(aw.innings.length,hm.innings.length,9);
+              const grp=(inn)=>{const out=[];for(let i=0;i<maxInn;i+=3){out.push(inn.slice(i,i+3).map(v=>v!=null?v:0).join(""));}return out;};
+              return<div key={gm.game_pk} style={{breakInside:"avoid",pageBreakInside:"avoid",marginBottom:10}}>
+                <div style={{fontWeight:700,fontSize:11,borderBottom:"1px solid #000",paddingBottom:1,marginBottom:1}}>{aw.r>=hm.r?aw.name:hm.name} {Math.max(aw.r,hm.r)}, {aw.r<hm.r?aw.name:hm.name} {Math.min(aw.r,hm.r)}</div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:10,fontWeight:700,lineHeight:1.2,marginTop:1}}>
+                  <span>{aw.name}</span><span>{aw.r}</span>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:10,fontWeight:700,lineHeight:1.2}}>
+                  <span>{hm.name}</span><span>{hm.r}</span>
+                </div>
+                <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed",fontSize:9,lineHeight:1.1,marginTop:1}}>
+                  <tbody>
+                    {[aw,hm].map(tm=><tr key={tm.abbrev}>
+                      <th style={{textAlign:"left",width:"22%",fontWeight:700,borderTop:"1px solid #000",padding:"1px 0"}}>{tm.name.split(" ").pop()}</th>
+                      {grp(tm.innings).map((g3,i)=><td key={i} style={{textAlign:"right",width:"10%",borderTop:"1px solid #000",padding:"1px 1px"}}>{g3}</td>)}
+                      <td style={{textAlign:"right",borderTop:"1px solid #000",padding:"1px 1px"}}>—</td>
+                      <td style={{textAlign:"right",fontWeight:700,borderTop:"1px solid #000",padding:"1px 1px"}}>{tm.r}</td>
+                      <td style={{textAlign:"right",borderTop:"1px solid #000",padding:"1px 1px"}}>{tm.h}</td>
+                      <td style={{textAlign:"right",borderTop:"1px solid #000",padding:"1px 1px"}}>{tm.e}</td>
+                    </tr>)}
+                  </tbody>
+                </table>
+                {[aw,hm].map(tm=><div key={tm.abbrev+"-b"}>
+                  <div style={{fontSize:9,fontWeight:700,margin:"2px 0 0",borderBottom:"1px solid #000"}}>{tm.name.split(" ").pop()}</div>
+                  <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed",fontSize:9,lineHeight:1.1}}>
+                    <thead><tr>
+                      <th style={{width:"30%",textAlign:"left",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>Player</th>
+                      {["AB","R","H","BI","BB","SO"].map(h=><th key={h} style={{width:"5%",textAlign:"right",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>{h}</th>)}
+                      <th style={{width:"8%",textAlign:"right",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>Avg</th>
+                    </tr></thead>
+                    <tbody>
+                      {tm.batters.map((b,i)=><tr key={i}>
+                        <td style={{textAlign:"left",whiteSpace:"nowrap",overflow:"hidden",padding:"0 0"}}>{b.name}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{b.ab}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{b.r}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{b.h}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{b.rbi}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{b.bb}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{b.so}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{b.avg}</td>
+                      </tr>)}
+                    </tbody>
+                  </table>
+                </div>)}
+                {[aw,hm].map(tm=><div key={tm.abbrev+"-p"}>
+                  <div style={{fontSize:9,fontWeight:700,margin:"2px 0 0",borderBottom:"1px solid #000"}}>{tm.name.split(" ").pop()} Pitching</div>
+                  <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed",fontSize:9,lineHeight:1.1}}>
+                    <thead><tr>
+                      <th style={{width:"37%",textAlign:"left",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>Pitcher</th>
+                      <th style={{width:"5%",textAlign:"right",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>IP</th>
+                      {["H","R","ER","BB","SO"].map(h=><th key={h} style={{width:"5%",textAlign:"right",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>{h}</th>)}
+                      <th style={{width:"10%",textAlign:"right",borderTop:"1px solid #000",fontWeight:700,padding:"1px 0"}}>ERA</th>
+                    </tr></thead>
+                    <tbody>
+                      {tm.pitchers.map((p,i)=><tr key={i}>
+                        <td style={{textAlign:"left",whiteSpace:"nowrap",overflow:"hidden",padding:"0 0"}}>{p.name}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{p.ip}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{p.h}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{p.r}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{p.er}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{p.bb}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{p.so}</td>
+                        <td style={{textAlign:"right",padding:"0 0"}}>{p.era}</td>
+                      </tr>)}
+                    </tbody>
+                  </table>
+                </div>)}
+                {gm.notes&&<div style={{fontSize:9,lineHeight:1.2,padding:"2px 0",borderTop:"1px solid #000",marginTop:1}}>{gm.notes}</div>}
+              </div>})}
+          </div>}
+        </div>
+        </div>
+      </div>
+    </>}
   </div>
 );
 
@@ -738,7 +859,7 @@ const td2_d={...pad_d,borderBottom:`1px solid #161616`};
 
 return(
 <div style={{background:"#2a2520",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-<style>{`@import url('https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@800&family=Source+Sans+3:wght@200..900&display=swap'); *{box-sizing:border-box} .crt-screen *::-webkit-scrollbar{width:0;display:none} .crt-screen>.crt-scroll::-webkit-scrollbar{width:8px;display:block} .crt-screen>.crt-scroll::-webkit-scrollbar-thumb{background:#555;border-radius:3px} .crt-screen>.crt-scroll::-webkit-scrollbar-track{background:#1a1a1a} .crt-screen tr:hover td{background:#111 !important} .crt-screen ::selection{background:${g};color:${bg}} .crt-screen input::placeholder{color:#333} .crt-screen .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-screen .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999} .np-scroll::-webkit-scrollbar{width:6px} .np-scroll::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px} .np-scroll::-webkit-scrollbar-track{background:transparent} .np-scroll table{border-collapse:collapse;table-layout:fixed;width:100%} .np-scroll td,.np-scroll th{overflow:hidden}`}</style>
+<style>{`@import url('https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@800&family=Source+Sans+3:wght@200..900&display=swap'); @import url('https://fonts.cdnfonts.com/css/rojal'); *{box-sizing:border-box} .crt-screen *::-webkit-scrollbar{width:0;display:none} .crt-screen>.crt-scroll::-webkit-scrollbar{width:8px;display:block} .crt-screen>.crt-scroll::-webkit-scrollbar-thumb{background:#555;border-radius:3px} .crt-screen>.crt-scroll::-webkit-scrollbar-track{background:#1a1a1a} .crt-screen tr:hover td{background:#111 !important} .crt-screen ::selection{background:${g};color:${bg}} .crt-screen input::placeholder{color:#333} .crt-screen .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-screen .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999} .np-scroll::-webkit-scrollbar{width:6px} .np-scroll::-webkit-scrollbar-thumb{background:#bbb;border-radius:3px} .np-scroll::-webkit-scrollbar-track{background:transparent} .np-scroll table{border-collapse:collapse;table-layout:fixed;width:100%} .np-scroll td,.np-scroll th{overflow:hidden}`}</style>
 
 {/* Monitor container */}
 <div style={{position:"relative",width:"min(100vw, calc(100vh * 1080 / 608))",height:"min(100vh, calc(100vw * 608 / 1080))"}}>
@@ -956,11 +1077,11 @@ return(
       {/* Content (above texture) */}
       <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",height:"100%"}}>
       {/* Masthead */}
-      <div style={{borderBottom:"2px solid #000",padding:"8px 16px 6px",flexShrink:0,textAlign:"center",position:"relative"}}>
-        <div onClick={()=>setShowPaper(false)} style={{position:"absolute",right:10,top:6,cursor:"pointer",fontSize:16,color:"#888",fontFamily:"sans-serif",lineHeight:1}}>✕</div>
-        <div style={{fontStyle:"italic",fontSize:9,color:"#555",marginBottom:2}}>{boxData ? boxData.date : "..."}</div>
-        <div style={{fontSize:22,fontWeight:700,letterSpacing:1,margin:"2px 0"}}>The War Street Journal</div>
-        <div style={{fontSize:11,margin:"2px 0 4px",color:"#333"}}>BASEBALL SCORES</div>
+      <div style={{borderBottom:"3px solid #000",padding:"12px 16px 8px",flexShrink:0,textAlign:"center",position:"relative"}}>
+        <div onClick={()=>setShowPaper(false)} style={{position:"absolute",right:10,top:8,cursor:"pointer",fontSize:18,color:"#888",fontFamily:"sans-serif",lineHeight:1}}>✕</div>
+        <div style={{fontStyle:"italic",fontSize:10,color:"#555",marginBottom:3}}>{boxData ? boxData.date : "..."}</div>
+        <div style={{fontFamily:"'Rojal','Georgia',serif",fontSize:90,fontWeight:400,letterSpacing:-1,margin:"6px 0",lineHeight:1}}>THE W<span style={{fontSize:"50%"}}>.</span>A<span style={{fontSize:"50%"}}>.</span>R<span style={{fontSize:"50%"}}>.</span> STREET JOURNAL</div>
+        <div style={{fontSize:13,margin:"4px 0 6px",color:"#333",letterSpacing:3}}>BASEBALL SCORES</div>
       </div>
 
       {/* Scrollable body */}
