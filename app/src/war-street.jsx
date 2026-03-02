@@ -389,7 +389,7 @@ if (cur === null) {
   return (
     <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap'); @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important;touch-action:none}`}</style>
-      <div style={{position:"relative",width:"min(105vw, calc(105vh * 768 / 1376))",height:"min(105vh, calc(105vw * 1376 / 768))",touchAction:"none"}}>
+      <div style={{position:"relative",width:"min(120vw, calc(120vh * 768 / 1376))",height:"min(120vh, calc(120vw * 1376 / 768))",touchAction:"none"}}>
         <div style={{position:"absolute",left:"4.30%",top:"10.68%",width:"94.01%",height:"68.75%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1,touchAction:"none"}}>
           <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
           <div style={{position:"relative",zIndex:4,textAlign:"center",padding:"10px 16px",maxWidth:"90%"}}>
@@ -433,8 +433,8 @@ return (
     {/* Palm Device — real image frame */}
     <div style={{
       position:"relative",
-      width: "min(105vw, calc(105vh * 768 / 1376))",
-      height: "min(105vh, calc(105vw * 1376 / 768))",
+      width: "min(120vw, calc(120vh * 768 / 1376))",
+      height: "min(120vh, calc(120vw * 1376 / 768))",
       touchAction:"none",
     }}>
       {/* LCD Screen — positioned in the transparent cutout */}
