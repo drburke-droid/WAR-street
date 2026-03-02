@@ -20,6 +20,14 @@ function oSlots(r,el){const f={};r.forEach(x=>{f[x.slot]=1});return el.filter(s=
 function fits(r,pl){return oSlots(r,pl.el).length>0}
 
 
+// ── Inline Sparkline ──
+const Spark = (pts, color, w=48, h=14) => {
+  if(!pts||!pts.length) return <span style={{color:"#1a1a1a"}}>---</span>;
+  const mn=Math.min(...pts), mx=Math.max(...pts), rng=mx-mn||1;
+  const d=pts.map((v,i)=>`${(i/(pts.length-1))*w},${h-(((v-mn)/rng)*h)}`).join(" ");
+  return <svg width={w} height={h} style={{verticalAlign:"middle"}}><polyline points={d} fill="none" stroke={color} strokeWidth={1.2}/></svg>;
+};
+
 // ── useIsMobile Hook ──
 function useIsMobile(breakpoint = 768) {
 const [isMobile, setIsMobile] = useState(
@@ -101,7 +109,9 @@ useEffect(() => {
 fetch(`${API}/players`).then(r=>r.json()).then(data=>setRaw(data.map(p=>({
   id:p.id, nm:p.name, tm:p.team, ps:p.position, tp:p.player_type,
   el:p.eligible_positions, pj:p.projected_war, w:p.war_ytd, gp:p.games_played,
-  c:p.current_price, pp:p.prev_price, d:p.price_change, dp:p.price_change_pct
+  c:p.current_price, pp:p.prev_price, d:p.price_change, dp:p.price_change_pct,
+  vol:p.volume??0, opp:p.opponent??"", tbk:p.tb_k??null,
+  prH:p.price_history??[], wH:p.war_history??[]
 })))).catch(()=>{});
 }, []);
 
@@ -140,7 +150,7 @@ let l = [...pl];
 if (ft==="HIT") l=l.filter(p=>p.tp==="H");
 if (ft==="PIT") l=l.filter(p=>p.tp==="P");
 if (q) l=l.filter(p=>p.nm.toLowerCase().includes(q.toLowerCase())||p.tm.toLowerCase().includes(q.toLowerCase()));
-const ss = {PRICE:(a,b)=>b.c-a.c, WAR:(a,b)=>b.w-a.w, CHG:(a,b)=>simChg(b,chgFrame).pct-simChg(a,chgFrame).pct, AZ:(a,b)=>a.nm.localeCompare(b.nm)};
+const ss = {PRICE:(a,b)=>b.c-a.c, WAR:(a,b)=>b.w-a.w, CHG:(a,b)=>simChg(b,chgFrame).pct-simChg(a,chgFrame).pct, AZ:(a,b)=>a.nm.localeCompare(b.nm), VOL:(a,b)=>(b.vol||0)-(a.vol||0)};
 l.sort(ss[so]||ss.PRICE); return l;
 }, [pl,ft,so,q,chgFrame]);
 
@@ -207,250 +217,192 @@ return (
       .palm-screen::-webkit-scrollbar-track{background:${bgc}}
     `}</style>
 
-    {/* Palm Device - CSS Recreation */}
+    {/* Palm Device — real image frame */}
     <div style={{
       position:"relative",
       width: "min(339px, 92vw)",
-      aspectRatio: "339/494",
-      background: "linear-gradient(180deg, #6b6b6b 0%, #585858 8%, #4a4a4a 50%, #3d3d3d 100%)",
-      borderRadius: 16,
-      boxShadow: "0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)",
-      overflow: "hidden",
-      display: "flex",
-      flexDirection: "column",
+      aspectRatio: "278/494",
     }}>
-      {/* Top bar with logos */}
-      <div style={{
-        display:"flex", justifyContent:"space-between", alignItems:"center",
-        padding: "6px 14px 4px",
-        height: "7%",
+      {/* LCD Screen — positioned in the transparent cutout */}
+      <div className="palm-screen" style={{
+        position:"absolute",
+        left:"5.04%", top:"10.93%",
+        width:"92.09%", height:"68.02%",
+        background: bgc,
+        overflow:"hidden",
+        display:"flex", flexDirection:"column",
+        fontFamily:"'Silkscreen',monospace",
+        color: fg,
+        zIndex:1,
       }}>
-        <span style={{color:"#ccc",fontFamily:"'JetBrains Mono',monospace",fontSize:11,fontWeight:800,letterSpacing:1,textShadow:"0 1px 2px rgba(0,0,0,0.5)"}}>
-          Palm<span style={{color:"#4a9eff"}}>∎</span>Pilot
-        </span>
-        <span style={{color:"#999",fontFamily:"monospace",fontSize:8,letterSpacing:1}}>US Robotics</span>
-      </div>
+        {/* LCD pixel grid overlay */}
+        <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
 
-      {/* Screen bezel */}
-      <div style={{
-        flex: 1,
-        margin: "0 12px",
-        background: "#1a1008",
-        borderRadius: 4,
-        padding: 4,
-        boxShadow: "inset 0 2px 8px rgba(0,0,0,0.8)",
-      }}>
-        {/* LCD Screen */}
-        <div className="palm-screen" style={{
-          width:"100%", height:"100%",
-          background: bgc,
-          borderRadius: 2,
-          overflow:"hidden",
-          display:"flex", flexDirection:"column",
-          fontFamily:"'Silkscreen',monospace",
-          color: fg,
-          position: "relative",
-        }}>
-          {/* LCD pixel grid overlay */}
-          <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
+        {/* Flash */}
+        {msg&&<div style={{position:"absolute",top:0,left:0,right:0,padding:"2px 4px",background:msg.e==="E"?"#c85555":vlo,color:bgc,fontSize:8,zIndex:20,textAlign:"center"}}>{msg.m}</div>}
 
-          {/* Flash */}
-          {msg&&<div style={{position:"absolute",top:0,left:0,right:0,padding:"2px 4px",background:msg.e==="E"?"#c85555":vlo,color:bgc,fontSize:8,zIndex:20,textAlign:"center"}}>{msg.m}</div>}
-
-          {/* Header */}
-          <div style={{padding:"2px 4px",borderBottom:`1px solid ${brd}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
-            <div style={{display:"flex",alignItems:"center",gap:3}}>
-              <span onClick={()=>setMenu(m=>!m)} style={{cursor:"pointer",fontSize:10,color:lo,lineHeight:1}}>☰</span>
-              <span style={{fontFamily:"'JetBrains Mono'",fontWeight:800,fontSize:10,color:vlo,letterSpacing:1}}>WAR ST.</span>
-            </div>
-            <span style={{fontSize:7,color:lo}}>GM{GP} '26</span>
+        {/* Header */}
+        <div style={{padding:"2px 4px",borderBottom:`1px solid ${brd}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:3}}>
+            <span onClick={()=>setMenu(m=>!m)} style={{cursor:"pointer",fontSize:10,color:lo,lineHeight:1}}>☰</span>
+            <span style={{fontFamily:"'JetBrains Mono'",fontWeight:800,fontSize:10,color:vlo,letterSpacing:1}}>WAR ST.</span>
           </div>
+          <span style={{fontSize:7,color:lo}}>GM{GP} '26</span>
+        </div>
 
-          {/* Menu dropdown */}
-          {menu&&<>
-            <div onClick={()=>setMenu(false)} style={{position:"absolute",inset:0,zIndex:14}}/>
-            <div style={{position:"absolute",top:16,left:2,background:hi,border:`1px solid ${fg}`,zIndex:15,width:"70%",maxHeight:"80%",overflow:"auto"}} className="palm-screen">
-              <div style={{padding:"2px 5px",fontSize:8,color:vlo,borderBottom:`1px solid ${brd}`,fontWeight:700}}>MENU</div>
-              {["Profile","Settings"].map((l,i)=>
-                <div key={i} onClick={()=>setMenu(false)} style={{padding:"3px 5px",fontSize:8,color:fg,cursor:"pointer"}}
-                  onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{l}</div>)}
-              <div style={{padding:"2px 5px",fontSize:7,color:lo,borderBottom:`1px solid ${brd}`}}>SWITCH TEAM</div>
-              <div style={{maxHeight:100,overflowY:"auto"}} className="palm-screen">
-                {lb.map(o=>
-                  <div key={o.id} onClick={()=>{setCur(o.id);setMenu(false)}} style={{padding:"1px 5px",fontSize:7,cursor:"pointer",color:o.id===cur?vlo:fg,fontWeight:o.id===cur?700:400}}
-                    onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{o.nm}{o.id===cur?" ◄":""}</div>)}
-              </div>
-            </div>
-          </>}
-
-          {/* Status */}
-          <div style={{padding:"1px 4px",borderBottom:`1px solid ${brd}`,fontSize:7,color:lo,display:"flex",gap:4,alignItems:"center",flexShrink:0,flexWrap:"wrap"}}>
-            <span>${f$(rem)}</span>
-            <span>W:{tW.toFixed(1)}</span>
-            <span>TX:{MAX_TX-me.tx}</span>
-            <span>{me.r.length}/13</span>
-            <div style={{marginLeft:"auto",display:"flex",gap:1}}>
-              {["MKT","PORT","RNK","?"].map(v=>
-                <span key={v} onClick={()=>setVw(v)} style={{cursor:"pointer",padding:"0 3px",fontSize:7,color:vw===v?bgc:lo,background:vw===v?vlo:"transparent",borderRadius:1}}>{v}</span>)}
+        {/* Menu dropdown */}
+        {menu&&<>
+          <div onClick={()=>setMenu(false)} style={{position:"absolute",inset:0,zIndex:14}}/>
+          <div style={{position:"absolute",top:16,left:2,background:hi,border:`1px solid ${fg}`,zIndex:15,width:"70%",maxHeight:"80%",overflow:"auto"}} className="palm-screen">
+            <div style={{padding:"2px 5px",fontSize:8,color:vlo,borderBottom:`1px solid ${brd}`,fontWeight:700}}>MENU</div>
+            {["Profile","Settings"].map((l,i)=>
+              <div key={i} onClick={()=>setMenu(false)} style={{padding:"3px 5px",fontSize:8,color:fg,cursor:"pointer"}}
+                onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{l}</div>)}
+            <div style={{padding:"2px 5px",fontSize:7,color:lo,borderBottom:`1px solid ${brd}`}}>SWITCH TEAM</div>
+            <div style={{maxHeight:100,overflowY:"auto"}} className="palm-screen">
+              {lb.map(o=>
+                <div key={o.id} onClick={()=>{setCur(o.id);setMenu(false)}} style={{padding:"1px 5px",fontSize:7,cursor:"pointer",color:o.id===cur?vlo:fg,fontWeight:o.id===cur?700:400}}
+                  onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{o.nm}{o.id===cur?" ◄":""}</div>)}
             </div>
           </div>
+        </>}
 
-          {/* Content */}
-          <div className="palm-screen" style={{flex:1,overflow:"auto",padding:"1px 0"}}>
-            {/* MARKET */}
-            {vw==="MKT"&&<div>
-              <div style={{display:"flex",gap:2,padding:"1px 3px",alignItems:"center",fontSize:7,flexWrap:"wrap"}}>
-                {["ALL","HIT","PIT"].map(v=>
-                  <span key={v} onClick={()=>setFt(v)} style={{cursor:"pointer",color:ft===v?bgc:lo,background:ft===v?vlo:"transparent",padding:"0 2px",borderRadius:1}}>{v}</span>)}
-                <span style={{color:brd}}>|</span>
-                {["$","WAR","Δ","AZ"].map((v,i)=>{const k=["PRICE","WAR","CHG","AZ"][i];return(
-                  <span key={k} onClick={()=>setSo(k)} style={{cursor:"pointer",color:so===k?bgc:lo,background:so===k?vlo:"transparent",padding:"0 2px",borderRadius:1}}>{v}</span>)})}
-                <input value={q} onChange={e=>setQ(e.target.value)} placeholder="find" style={{marginLeft:"auto",width:40,background:"transparent",border:`1px solid ${brd}`,color:fg,fontFamily:"inherit",fontSize:7,padding:"0 2px"}}/>
-              </div>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead><tr>
-                  <th style={{...th2,width:65}}>NAME</th>
-                  <th style={{...th2,width:22}}>TM</th>
-                  <th style={{...th2,width:24}}>PS</th>
-                  <th style={{...th2,width:36}}>$</th>
-                  <th style={{...th2,width:28,cursor:"pointer"}} onClick={cycleFrame}>Δ<span style={{color:vlo,fontSize:6}}>[{chgFrame}]</span></th>
-                  <th style={{...th2,width:20}}>W</th>
-                  <th style={{...th2,width:22}}></th>
-                </tr></thead>
-                <tbody>
-                  {mk.map(p=>{
-                    const mine=has(p.id);const ok=!mine&&fits(me.r,p);const no=!mine&&!ok;
-                    const ch=simChg(p,chgFrame);
-                    const pos=[...new Set(p.el.map(dSlot))].join("/");
-                    return(
-                      <tr key={p.id} style={{opacity:no ? 0.25 : 1,background:mine?hi:"transparent"}}>
-                        <td style={{...td2,color:mine?vlo:fg,fontWeight:mine?700:400,overflow:"hidden",textOverflow:"ellipsis",maxWidth:65}}>{p.nm}</td>
-                        <td style={{...td2,color:lo,fontSize:7}}>{p.tm}</td>
-                        <td style={{...td2,fontSize:7}} title={pos}>{pos}</td>
-                        <td style={{...td2,fontWeight:700}}>{f$(p.c)}</td>
-                        <td style={td2}>{ch.pct>=0?"+":""}{ch.pct}%</td>
-                        <td style={td2}>{p.w.toFixed(1)}</td>
-                        <td style={{...td2,textAlign:"center"}}>
-                          {mine?<span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:8,fontWeight:700}}>SELL</span>
-                          :ok?<span onClick={()=>openBuy(p)} style={{cursor:"pointer",color:vlo,fontSize:8,fontWeight:700}}>BUY</span>
-                          :<span style={{color:brd,fontSize:7}}>--</span>}
-                        </td>
-                      </tr>);
-                  })}
-                </tbody>
-              </table>
-            </div>}
+        {/* Status */}
+        <div style={{padding:"1px 4px",borderBottom:`1px solid ${brd}`,fontSize:7,color:lo,display:"flex",gap:4,alignItems:"center",flexShrink:0,flexWrap:"wrap"}}>
+          <span>${f$(rem)}</span>
+          <span>W:{tW.toFixed(1)}</span>
+          <span>TX:{MAX_TX-me.tx}</span>
+          <span>{me.r.length}/13</span>
+          <div style={{marginLeft:"auto",display:"flex",gap:1}}>
+            {["MKT","PORT","RNK","?"].map(v=>
+              <span key={v} onClick={()=>setVw(v)} style={{cursor:"pointer",padding:"0 3px",fontSize:7,color:vw===v?bgc:lo,background:vw===v?vlo:"transparent",borderRadius:1}}>{v}</span>)}
+          </div>
+        </div>
 
-            {/* PORTFOLIO */}
-            {vw==="PORT"&&<div style={{padding:"0 1px"}}>
-              <div style={{fontSize:7,color:lo,padding:"1px 3px"}}>{me.nm}</div>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead><tr>{["SL","PLAYER","$","PD","P/L","W",""].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
-                <tbody>
-                  {rE.map(({slot:s,p,paid})=>{
-                    if(!p)return<tr key={s}><td style={{...td2,color:brd,fontSize:8}}>{dSlot(s)}</td><td colSpan={6} style={{...td2,color:brd,fontSize:7}}>-- empty --</td></tr>;
-                    const pl2=p.c-paid;
-                    return<tr key={s}>
-                      <td style={{...td2,color:vlo,fontWeight:700,fontSize:8}}>{dSlot(s)}</td>
-                      <td style={{...td2,fontSize:8}}>{p.nm}</td>
+        {/* Content */}
+        <div className="palm-screen" style={{flex:1,overflow:"auto",padding:"1px 0"}}>
+          {/* MARKET */}
+          {vw==="MKT"&&<div>
+            <div style={{display:"flex",gap:2,padding:"1px 3px",alignItems:"center",fontSize:7,flexWrap:"wrap"}}>
+              {["ALL","HIT","PIT"].map(v=>
+                <span key={v} onClick={()=>setFt(v)} style={{cursor:"pointer",color:ft===v?bgc:lo,background:ft===v?vlo:"transparent",padding:"0 2px",borderRadius:1}}>{v}</span>)}
+              <span style={{color:brd}}>|</span>
+              {["$","WAR","Δ","AZ"].map((v,i)=>{const k=["PRICE","WAR","CHG","AZ"][i];return(
+                <span key={k} onClick={()=>setSo(k)} style={{cursor:"pointer",color:so===k?bgc:lo,background:so===k?vlo:"transparent",padding:"0 2px",borderRadius:1}}>{v}</span>)})}
+              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="find" style={{marginLeft:"auto",width:40,background:"transparent",border:`1px solid ${brd}`,color:fg,fontFamily:"inherit",fontSize:7,padding:"0 2px"}}/>
+            </div>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead><tr>
+                <th style={{...th2,width:65}}>NAME</th>
+                <th style={{...th2,width:22}}>TM</th>
+                <th style={{...th2,width:24}}>PS</th>
+                <th style={{...th2,width:36}}>$</th>
+                <th style={{...th2,width:28,cursor:"pointer"}} onClick={cycleFrame}>Δ<span style={{color:vlo,fontSize:6}}>[{chgFrame}]</span></th>
+                <th style={{...th2,width:20}}>W</th>
+                <th style={{...th2,width:22}}></th>
+              </tr></thead>
+              <tbody>
+                {mk.map(p=>{
+                  const mine=has(p.id);const ok=!mine&&fits(me.r,p);const no=!mine&&!ok;
+                  const ch=simChg(p,chgFrame);
+                  const pos=[...new Set(p.el.map(dSlot))].join("/");
+                  return(
+                    <tr key={p.id} style={{background:mine?hi:"transparent"}}>
+                      <td style={{...td2,color:mine?vlo:fg,fontWeight:mine?700:400,overflow:"hidden",textOverflow:"ellipsis",maxWidth:65}}>{p.nm}</td>
+                      <td style={{...td2,color:lo,fontSize:7}}>{p.tm}</td>
+                      <td style={{...td2,fontSize:7}} title={pos}>{pos}</td>
                       <td style={{...td2,fontWeight:700}}>{f$(p.c)}</td>
-                      <td style={{...td2,color:lo,fontSize:7}}>{f$(paid)}</td>
-                      <td style={{...td2,fontWeight:700}}>{pl2>=0?"+":""}{f$(pl2)}</td>
+                      <td style={td2}>{ch.pct>=0?"+":""}{ch.pct}%</td>
                       <td style={td2}>{p.w.toFixed(1)}</td>
-                      <td style={td2}><span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:8}}>✕</span></td>
-                    </tr>})}
-                </tbody>
-              </table>
-            </div>}
+                      <td style={{...td2,textAlign:"center"}}>
+                        {mine?<span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:8,fontWeight:700}}>SELL</span>
+                        :ok?<span onClick={()=>openBuy(p)} style={{cursor:"pointer",color:vlo,fontSize:8,fontWeight:700}}>BUY</span>
+                        :<span style={{color:brd,fontSize:7}}>--</span>}
+                      </td>
+                    </tr>);
+                })}
+              </tbody>
+            </table>
+          </div>}
 
-            {/* STANDINGS */}
-            {vw==="RNK"&&<div style={{padding:"0 1px"}}>
-              <div style={{fontSize:7,color:lo,padding:"1px 3px"}}>STANDINGS</div>
-              <table style={{width:"100%",borderCollapse:"collapse"}}>
-                <thead><tr>{["#","TEAM","WAR","VAL"].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
-                <tbody>
-                  {lb.map((o,i)=><tr key={o.id} style={{background:o.id===cur?hi:"transparent"}}>
-                    <td style={{...td2,color:i<3?vlo:lo,fontWeight:i<3?700:400}}>{i+1}</td>
-                    <td style={{...td2,fontWeight:o.id===cur?700:400,fontSize:8}}>{o.nm}{o.id===cur?" ◄":""}</td>
-                    <td style={{...td2,fontWeight:700}}>{o.w.toFixed(1)}</td>
-                    <td style={{...td2,color:lo,fontSize:8}}>{f$(o.v)}</td>
-                  </tr>)}
-                </tbody>
-              </table>
-              <div style={{fontSize:7,color:brd,padding:"2px 3px"}}>Rosters hidden.</div>
-            </div>}
+          {/* PORTFOLIO */}
+          {vw==="PORT"&&<div style={{padding:"0 1px"}}>
+            <div style={{fontSize:7,color:lo,padding:"1px 3px"}}>{me.nm}</div>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead><tr>{["SL","PLAYER","$","PD","P/L","W",""].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
+              <tbody>
+                {rE.map(({slot:s,p,paid})=>{
+                  if(!p)return<tr key={s}><td style={{...td2,color:brd,fontSize:8}}>{dSlot(s)}</td><td colSpan={6} style={{...td2,color:brd,fontSize:7}}>-- empty --</td></tr>;
+                  const pl2=p.c-paid;
+                  return<tr key={s}>
+                    <td style={{...td2,color:vlo,fontWeight:700,fontSize:8}}>{dSlot(s)}</td>
+                    <td style={{...td2,fontSize:8}}>{p.nm}</td>
+                    <td style={{...td2,fontWeight:700}}>{f$(p.c)}</td>
+                    <td style={{...td2,color:lo,fontSize:7}}>{f$(paid)}</td>
+                    <td style={{...td2,fontWeight:700}}>{pl2>=0?"+":""}{f$(pl2)}</td>
+                    <td style={td2}>{p.w.toFixed(1)}</td>
+                    <td style={td2}><span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:8}}>✕</span></td>
+                  </tr>})}
+              </tbody>
+            </table>
+          </div>}
 
-            {/* HELP */}
-            {vw==="?"&&<div style={{padding:"3px 5px",fontSize:8,lineHeight:1.6}}>
-              <div style={{fontWeight:700,fontSize:9,marginBottom:2,color:vlo}}>RULES</div>
-              {[["$",`$${BUDGET/1e6}M cap, 13 slots`],["POS","C 1B 2B 3B SS 3×OF 4×SP RP"],["OWN","Shared. Rosters hidden."],["WIN","Most cumulative WAR"],["TX",`${MAX_TX}/wk`],["Δ","Tap header: 1D/1W/2W/1M"]].map(([t,d],i)=>
-                <div key={i}><span style={{color:vlo,fontWeight:700}}>{t}</span> <span style={{color:fg}}>{d}</span></div>)}
-            </div>}
-          </div>
+          {/* STANDINGS */}
+          {vw==="RNK"&&<div style={{padding:"0 1px"}}>
+            <div style={{fontSize:7,color:lo,padding:"1px 3px"}}>STANDINGS</div>
+            <table style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead><tr>{["#","TEAM","WAR","VAL"].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
+              <tbody>
+                {lb.map((o,i)=><tr key={o.id} style={{background:o.id===cur?hi:"transparent"}}>
+                  <td style={{...td2,color:i<3?vlo:lo,fontWeight:i<3?700:400}}>{i+1}</td>
+                  <td style={{...td2,fontWeight:o.id===cur?700:400,fontSize:8}}>{o.nm}{o.id===cur?" ◄":""}</td>
+                  <td style={{...td2,fontWeight:700}}>{o.w.toFixed(1)}</td>
+                  <td style={{...td2,color:lo,fontSize:8}}>{f$(o.v)}</td>
+                </tr>)}
+              </tbody>
+            </table>
+            <div style={{fontSize:7,color:brd,padding:"2px 3px"}}>Rosters hidden.</div>
+          </div>}
 
-          {/* Modal */}
-          {sel&&<div onClick={()=>setSel(null)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.3)",zIndex:20,display:"flex",alignItems:"center",justifyContent:"center"}}>
-            <div onClick={e=>e.stopPropagation()} style={{background:hi,border:`2px solid ${fg}`,padding:"6px 8px",width:"85%",maxHeight:"80%",overflow:"auto"}}>
-              <div style={{fontWeight:700,fontSize:10,marginBottom:2,color:vlo}}>{ta==="B"?"BUY":"SELL"}: {sel.nm}</div>
-              <div style={{fontSize:7,color:lo,marginBottom:3}}>{sel.tm} | {[...new Set(sel.el.map(dSlot))].join("/")}</div>
-              <div style={{fontSize:8,marginBottom:2}}><span style={{color:lo}}>$ </span><span style={{fontWeight:700}}>{f$(sel.c)}</span> <span style={{color:lo}}>W </span>{sel.w.toFixed(1)}</div>
-              {ta==="B"&&<>
-                <div style={{fontSize:7,color:lo,marginBottom:1}}>SLOT:</div>
-                <div style={{display:"flex",gap:2,flexWrap:"wrap",marginBottom:3}}>
-                  {[...new Set(sel.el.map(dSlot))].map(ds=>{
-                    const matching=sel.el.filter(s=>dSlot(s)===ds);const openM=oSlots(me.r,matching);const ok=openM.length>0;const isSel=sl&&dSlot(sl)===ds;
-                    return<span key={ds} onClick={()=>ok&&setSl(openM[0])} style={{padding:"0 4px",fontSize:8,border:`1px solid ${isSel?fg:ok?brd:"#ccc"}`,color:isSel?bgc:ok?fg:"#ccc",background:isSel?fg:"transparent",cursor:ok?"pointer":"default"}}>{ds}</span>})}
-                </div>
-                <div style={{fontSize:7,marginBottom:3}}><span style={{color:lo}}>Left: </span>{f$(rem)}<span style={{color:lo}}> After: </span>{f$(rem-sel.c)}</div>
-              </>}
-              {ta==="S"&&sel.paid!=null&&<div style={{fontSize:7,marginBottom:3}}><span style={{color:lo}}>Paid: </span>{f$(sel.paid)}<span style={{color:lo}}> P/L: </span>{(()=>{const x=sel.c-sel.paid;return<span style={{color:x>=0?vlo:"#885555"}}>{x>=0?"+":""}{f$(x)}</span>})()}</div>}
-              <div style={{display:"flex",gap:3}}>
-                <span onClick={()=>setSel(null)} style={{cursor:"pointer",padding:"1px 6px",border:`1px solid ${brd}`,fontSize:8,color:lo}}>CANCEL</span>
-                <span onClick={()=>ta==="B"?buy(sel,sl):sell(sel)} style={{cursor:(ta==="B"&&!sl)?"default":"pointer",padding:"1px 6px",fontSize:8,fontWeight:700,border:`1px solid ${fg}`,color:bgc,background:ta==="B"?(sl?vlo:brd):"#885555",opacity:(ta==="B"&&!sl) ? 0.4 : 1}}>{ta==="B"?`BUY > ${sl?dSlot(sl):"..."}`:"SELL"}</span>
-              </div>
-            </div>
+          {/* HELP */}
+          {vw==="?"&&<div style={{padding:"3px 5px",fontSize:8,lineHeight:1.6}}>
+            <div style={{fontWeight:700,fontSize:9,marginBottom:2,color:vlo}}>RULES</div>
+            {[["$",`$${BUDGET/1e6}M cap, 13 slots`],["POS","C 1B 2B 3B SS 3×OF 4×SP RP"],["OWN","Shared. Rosters hidden."],["WIN","Most cumulative WAR"],["TX",`${MAX_TX}/wk`],["Δ","Tap header: 1D/1W/2W/1M"]].map(([t,d],i)=>
+              <div key={i}><span style={{color:vlo,fontWeight:700}}>{t}</span> <span style={{color:fg}}>{d}</span></div>)}
           </div>}
         </div>
+
+        {/* Modal */}
+        {sel&&<div onClick={()=>setSel(null)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.3)",zIndex:20,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:hi,border:`2px solid ${fg}`,padding:"6px 8px",width:"85%",maxHeight:"80%",overflow:"auto"}}>
+            <div style={{fontWeight:700,fontSize:10,marginBottom:2,color:vlo}}>{ta==="B"?"BUY":"SELL"}: {sel.nm}</div>
+            <div style={{fontSize:7,color:lo,marginBottom:3}}>{sel.tm} | {[...new Set(sel.el.map(dSlot))].join("/")}</div>
+            <div style={{fontSize:8,marginBottom:2}}><span style={{color:lo}}>$ </span><span style={{fontWeight:700}}>{f$(sel.c)}</span> <span style={{color:lo}}>W </span>{sel.w.toFixed(1)}</div>
+            {ta==="B"&&<>
+              <div style={{fontSize:7,color:lo,marginBottom:1}}>SLOT:</div>
+              <div style={{display:"flex",gap:2,flexWrap:"wrap",marginBottom:3}}>
+                {[...new Set(sel.el.map(dSlot))].map(ds=>{
+                  const matching=sel.el.filter(s=>dSlot(s)===ds);const openM=oSlots(me.r,matching);const ok=openM.length>0;const isSel=sl&&dSlot(sl)===ds;
+                  return<span key={ds} onClick={()=>ok&&setSl(openM[0])} style={{padding:"0 4px",fontSize:8,border:`1px solid ${isSel?fg:ok?brd:"#ccc"}`,color:isSel?bgc:ok?fg:"#ccc",background:isSel?fg:"transparent",cursor:ok?"pointer":"default"}}>{ds}</span>})}
+              </div>
+              <div style={{fontSize:7,marginBottom:3}}><span style={{color:lo}}>Left: </span>{f$(rem)}<span style={{color:lo}}> After: </span>{f$(rem-sel.c)}</div>
+            </>}
+            {ta==="S"&&sel.paid!=null&&<div style={{fontSize:7,marginBottom:3}}><span style={{color:lo}}>Paid: </span>{f$(sel.paid)}<span style={{color:lo}}> P/L: </span>{(()=>{const x=sel.c-sel.paid;return<span style={{color:x>=0?vlo:"#885555"}}>{x>=0?"+":""}{f$(x)}</span>})()}</div>}
+            <div style={{display:"flex",gap:3}}>
+              <span onClick={()=>setSel(null)} style={{cursor:"pointer",padding:"1px 6px",border:`1px solid ${brd}`,fontSize:8,color:lo}}>CANCEL</span>
+              <span onClick={()=>ta==="B"?buy(sel,sl):sell(sel)} style={{cursor:(ta==="B"&&!sl)?"default":"pointer",padding:"1px 6px",fontSize:8,fontWeight:700,border:`1px solid ${fg}`,color:bgc,background:ta==="B"?(sl?vlo:brd):"#885555",opacity:(ta==="B"&&!sl) ? 0.4 : 1}}>{ta==="B"?`BUY > ${sl?dSlot(sl):"..."}`:"SELL"}</span>
+            </div>
+          </div>
+        </div>}
       </div>
 
-      {/* Bottom buttons area */}
-      <div style={{
-        height: "13%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "12%",
-        padding: "0 20px",
-      }}>
-        {[
-          {icon:"📅", label:"Date"},
-          {icon:"📋", label:"Addr"},
-          {icon:"📝", label:"Todo"},
-          {icon:"📊", label:"Memo"},
-        ].map((btn, i) => (
-          <div key={i} style={{
-            width: 32, height: 32,
-            borderRadius: "50%",
-            background: "linear-gradient(180deg, #5a5a5a 0%, #3a3a3a 100%)",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14,
-            cursor: "default",
-          }}>{btn.icon}</div>
-        ))}
-      </div>
-
-      {/* Graffiti area */}
-      <div style={{
-        height: "4%",
-        background: "linear-gradient(180deg, #3d3d3d, #333)",
-        borderTop: "1px solid #555",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}>
-        <div style={{width:"40%",height:1,background:"#555",borderRadius:1}}/>
-      </div>
+      {/* Palm frame image overlay */}
+      <img src="/WAR-street/palm-frame.png" alt="" style={{
+        position:"absolute", inset:0,
+        width:"100%", height:"100%",
+        pointerEvents:"none",
+        zIndex:2,
+      }}/>
     </div>
   </div>
 );
@@ -523,38 +475,54 @@ return(
             <span key={v} onClick={()=>setFt(v)} style={{cursor:"pointer",color:ft===v?bg:dim,background:ft===v?g:"transparent",padding:"1px 8px"}}>{v}</span>)}
           <span style={{color:"#2a2a2a"}}>│</span>
           <span style={{color:dim}}>SORT</span>
-          {["PRICE","WAR","CHG","AZ"].map(v=>
+          {["PRICE","WAR","CHG","AZ","VOL"].map(v=>
             <span key={v} onClick={()=>setSo(v)} style={{cursor:"pointer",color:so===v?bg:dim,background:so===v?g:"transparent",padding:"1px 8px"}}>{v}</span>)}
           <input value={q} onChange={e=>setQ(e.target.value)} placeholder="> search" style={{marginLeft:"auto",background:"transparent",border:`1px solid ${brd_d}`,color:g,fontFamily:"inherit",fontSize:16,padding:"2px 8px",width:180}}/>
         </div>
         <div style={{maxHeight:"calc(100vh - 200px)",overflowY:"auto",overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",minWidth:600,tableLayout:"fixed"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",minWidth:900,tableLayout:"fixed"}}>
             <thead><tr>
-              <th style={{...th2_d,position:"sticky",left:0,zIndex:3,background:bg,width:120}}>PLAYER</th>
-              <th style={{...th2_d,width:40}}>TM</th>
-              <th style={{...th2_d,width:65}}>POS</th>
-              <th style={{...th2_d,width:70}}>PRICE</th>
-              <th style={{...th2_d,cursor:"pointer",userSelect:"none",width:65}} onClick={cycleFrame}>CHG <span style={{color:amb}}>[{chgFrame}]</span></th>
-              <th style={{...th2_d,width:45}}>WAR</th>
-              <th style={{...th2_d,width:50,textAlign:"center"}}></th>
+              <th style={{...th2_d,position:"sticky",left:0,zIndex:3,background:bg,width:110}}>PLAYER</th>
+              <th style={{...th2_d,width:40,textAlign:"center"}}></th>
+              <th style={{...th2_d,width:36}}>TM</th>
+              <th style={{...th2_d,width:55}}>POS</th>
+              <th style={{...th2_d,width:60}}>PRICE</th>
+              <th style={{...th2_d,width:48,textAlign:"center"}}>$</th>
+              <th style={{...th2_d,cursor:"pointer",userSelect:"none",width:55}} onClick={cycleFrame}>CHG <span style={{color:amb}}>[{chgFrame}]</span></th>
+              <th style={{...th2_d,width:40}}>WAR</th>
+              <th style={{...th2_d,width:48,textAlign:"center"}}>W</th>
+              <th style={{...th2_d,width:50}}>VOL</th>
+              <th style={{...th2_d,width:36}}>OPP</th>
+              <th style={{...th2_d,width:36}}>TB/K</th>
             </tr></thead>
             <tbody>
               {mk.map(p=>{
                 const mine=has(p.id);const ok=!mine&&fits(me.r,p);const no=!mine&&!ok;
                 const ch=simChg(p,chgFrame);
+                const vol=p.vol||0;
                 return(
-                  <tr key={p.id} style={{opacity:no ? 0.25 : 1,background:mine?"#081208":"transparent"}}>
+                  <tr key={p.id} style={{background:mine?"#081208":"transparent"}}>
                     <td style={{...td2_d,color:mine?amb:wh,position:"sticky",left:0,background:mine?"#081208":bg,zIndex:1}}>{p.nm}</td>
-                    <td style={{...td2_d,color:dim}}>{p.tm}</td>
-                    <td style={{...td2_d,overflow:"hidden",textOverflow:"ellipsis"}} title={[...new Set(p.el.map(dSlot))].join("/")}>{[...new Set(p.el.map(dSlot))].join("/")}</td>
-                    <td style={{...td2_d,color:wh}}>{f$(p.c)}</td>
-                    <td style={{...td2_d,color:ch.pct>=0?g:neg}}>{ch.pct>=0?"+":""}{ch.pct}%</td>
-                    <td style={td2_d}>{p.w.toFixed(1)}</td>
                     <td style={{...td2_d,textAlign:"center"}}>
                       {mine?<span onClick={()=>openSell(p)} style={{cursor:"pointer",background:neg,color:bg,padding:"1px 8px",fontWeight:700,fontSize:14}}>SELL</span>
                       :ok?<span onClick={()=>openBuy(p)} style={{cursor:"pointer",background:g,color:bg,padding:"1px 8px",fontWeight:700,fontSize:14}}>BUY</span>
                       :<span style={{color:"#1a1a1a"}}>---</span>}
                     </td>
+                    <td style={{...td2_d,color:dim}}>{p.tm}</td>
+                    <td style={{...td2_d,overflow:"hidden",textOverflow:"ellipsis"}} title={[...new Set(p.el.map(dSlot))].join("/")}>{[...new Set(p.el.map(dSlot))].join("/")}</td>
+                    <td style={{...td2_d,color:wh}}>{f$(p.c)}</td>
+                    <td style={{...td2_d,textAlign:"center"}}>{Spark(p.prH,wh)}</td>
+                    <td style={{...td2_d,color:ch.pct>=0?g:neg}}>{ch.pct>=0?"+":""}{ch.pct}%</td>
+                    <td style={td2_d}>{p.w.toFixed(1)}</td>
+                    <td style={{...td2_d,textAlign:"center"}}>{Spark(p.wH,g)}</td>
+                    <td style={td2_d}>
+                      <div style={{display:"inline-block",verticalAlign:"middle",width:30,height:6,background:"#1a1a1a",marginRight:4}}>
+                        <div style={{width:`${vol}%`,height:"100%",background:vol>66?amb:vol>33?g:dim}}/>
+                      </div>
+                      <span style={{fontSize:12}}>{vol}</span>
+                    </td>
+                    <td style={{...td2_d,color:p.opp?dim:"#1a1a1a",fontSize:14}}>{p.opp||"--"}</td>
+                    <td style={{...td2_d,color:p.tbk!=null?wh:"#1a1a1a",fontSize:14}}>{p.tbk!=null?p.tbk:"--"}</td>
                   </tr>);
               })}
             </tbody>

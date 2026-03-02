@@ -15,6 +15,11 @@ class PlayerOut(BaseModel):
     prev_price: int
     price_change: int = 0
     price_change_pct: float = 0.0
+    volume: int = 0
+    opponent: str = ""
+    tb_k: int | None = None
+    price_history: list[int] = []
+    war_history: list[float] = []
 
 
 class PlayerDetail(PlayerOut):

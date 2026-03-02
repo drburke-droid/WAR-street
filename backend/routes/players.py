@@ -1,8 +1,91 @@
+from datetime import date, datetime, timedelta, timezone
+from functools import lru_cache
+import hashlib
+import logging
+import math
+
+import httpx
 from fastapi import APIRouter, Query
 from db.client import get_supabase
 from models.player import PlayerOut, PlayerDetail
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/players", tags=["players"])
+
+# MLB team name → abbreviation mapping (API sometimes returns full names)
+_MLB_ABBREVS = {
+    "Arizona Diamondbacks": "ARI", "Atlanta Braves": "ATL", "Baltimore Orioles": "BAL",
+    "Boston Red Sox": "BOS", "Chicago Cubs": "CHC", "Chicago White Sox": "CWS",
+    "Cincinnati Reds": "CIN", "Cleveland Guardians": "CLE", "Colorado Rockies": "COL",
+    "Detroit Tigers": "DET", "Houston Astros": "HOU", "Kansas City Royals": "KC",
+    "Los Angeles Angels": "LAA", "Los Angeles Dodgers": "LAD", "Miami Marlins": "MIA",
+    "Milwaukee Brewers": "MIL", "Minnesota Twins": "MIN", "New York Mets": "NYM",
+    "New York Yankees": "NYY", "Oakland Athletics": "OAK", "Philadelphia Phillies": "PHI",
+    "Pittsburgh Pirates": "PIT", "San Diego Padres": "SD", "San Francisco Giants": "SF",
+    "Seattle Mariners": "SEA", "St. Louis Cardinals": "STL", "Tampa Bay Rays": "TB",
+    "Texas Rangers": "TEX", "Toronto Blue Jays": "TOR", "Washington Nationals": "WSH",
+}
+
+
+@lru_cache(maxsize=1)
+def _fetch_schedule(today: date) -> dict[str, str]:
+    """Fetch today's MLB schedule, return {team_abbrev: opponent_string}."""
+    url = f"https://statsapi.mlb.com/api/v1/schedule?date={today}&sportId=1"
+    try:
+        resp = httpx.get(url, timeout=5)
+        resp.raise_for_status()
+    except Exception:
+        logger.warning("MLB schedule fetch failed for %s", today)
+        return {}
+    mapping: dict[str, str] = {}
+    for game in resp.json().get("dates", [{}])[0].get("games", []):
+        try:
+            away_name = game["teams"]["away"]["team"]["name"]
+            home_name = game["teams"]["home"]["team"]["name"]
+            away = _MLB_ABBREVS.get(away_name, away_name[:3].upper())
+            home = _MLB_ABBREVS.get(home_name, home_name[:3].upper())
+            mapping[away] = f"@{home}"
+            mapping[home] = f"v{away}"
+        except (KeyError, TypeError):
+            continue
+    return mapping
+
+
+def _fake_history(player_id: int, current: float, n: int, pct: float) -> list[float]:
+    """Deterministic fake history curve seeded by player_id.
+
+    Walks backward from `current`, applying small pseudo-random steps so
+    each player gets a unique but stable sparkline shape.
+    """
+    seed = hashlib.md5(str(player_id).encode()).digest()
+    pts = [current]
+    for i in range(n - 1):
+        # Use bytes from the hash to get a deterministic -1..+1 value
+        b = seed[(i * 2) % len(seed)] ^ seed[(i * 2 + 1) % len(seed)]
+        noise = (b / 255.0) * 2 - 1                    # -1 .. +1
+        trend = math.sin(i * 0.6 + seed[0] / 50.0)     # gentle wave
+        step = 1 + (noise * 0.4 + trend * 0.3) * pct
+        pts.append(max(pts[-1] / step, 0.01))
+    pts.reverse()  # oldest first
+    return pts
+
+
+def _compute_volume(sb) -> dict[int, int]:
+    """Count transactions per player in last 14 days, normalize to 0-100."""
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).isoformat()
+    try:
+        result = sb.table("transactions").select("player_id").gte("created_at", cutoff).execute()
+    except Exception:
+        logger.warning("Volume query failed")
+        return {}
+    counts: dict[int, int] = {}
+    for row in result.data:
+        pid = row["player_id"]
+        counts[pid] = counts.get(pid, 0) + 1
+    if not counts:
+        return {}
+    mx = max(counts.values())
+    return {pid: round(c / mx * 100) for pid, c in counts.items()}
 
 
 @router.get("", response_model=list[PlayerOut])
@@ -23,6 +106,10 @@ def list_players(
     result = q.execute()
     players = result.data
 
+    # Compute volume scores and today's schedule
+    vol_map = _compute_volume(sb)
+    schedule = _fetch_schedule(date.today())
+
     # Compute change fields
     out = []
     for p in players:
@@ -30,10 +117,11 @@ def list_players(
         prev = p["prev_price"] or curr
         change = curr - prev
         pct = round((change / prev * 100) if prev else 0, 1)
+        team_abbrev = p["team"]
         out.append(PlayerOut(
             id=p["id"],
             name=p["name"],
-            team=p["team"],
+            team=team_abbrev,
             position=p["position"],
             player_type=p["player_type"],
             eligible_positions=p["eligible_positions"],
@@ -44,6 +132,11 @@ def list_players(
             prev_price=prev,
             price_change=change,
             price_change_pct=pct,
+            volume=vol_map.get(p["id"], 0),
+            opponent=schedule.get(team_abbrev, ""),
+            tb_k=None,         # future: rolling 14d total bases / K's
+            price_history=[round(v) for v in _fake_history(p["id"], curr, 14, 0.06)],
+            war_history=[round(v, 1) for v in _fake_history(p["id"], float(p["war_ytd"] or 0.1), 10, 0.15)],
         ))
 
     # Sort
