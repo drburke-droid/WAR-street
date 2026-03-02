@@ -106,7 +106,16 @@ export default function App() {
 const isMobile = useIsMobile();
 const [raw, setRaw] = useState([]);
 const [vw, setVw] = useState("MKT");
-const [cur, setCur] = useState(1);
+const [cur, setCur] = useState(() => {
+  const saved = localStorage.getItem("warstreet_owner");
+  return saved ? parseInt(saved, 10) : null;
+});
+const [loginPhase, setLoginPhase] = useState("boot");
+const [typedText, setTypedText] = useState("");
+const [logoOpacity, setLogoOpacity] = useState(0);
+const [teamName, setTeamName] = useState("");
+const [loginError, setLoginError] = useState(null);
+const [loginTeams, setLoginTeams] = useState([]);
 const [ft, setFt] = useState("ALL");
 const [so, setSo] = useState("PRICE");
 const [q, setQ] = useState("");
@@ -120,15 +129,22 @@ const [menu, setMenu] = useState(false);
 const frames = ["1D","1W","2W","1M"];
 const sparkFrames = ["1W","1M","SZN"];
 
-const [me, setMe] = useState({ id:1, nm:"...", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
+const [me, setMe] = useState({ id:null, nm:"...", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
 const [lb, setLb] = useState([]);
 const [showPaper, setShowPaper] = useState(false);
 const [boxData, setBoxData] = useState(null);
 const [boxLoading, setBoxLoading] = useState(false);
 const [leaders, setLeaders] = useState(null);
 
+// ── localStorage sync ──
+useEffect(() => {
+  if (cur !== null) localStorage.setItem("warstreet_owner", String(cur));
+  else localStorage.removeItem("warstreet_owner");
+}, [cur]);
+
 // ── API Fetches ──
 useEffect(() => {
+if (!cur) return;
 fetch(`${API}/players`).then(r=>r.json()).then(data=>setRaw(data.map(p=>({
   id:p.id, nm:p.name, tm:p.team, ps:p.position, tp:p.player_type,
   el:p.eligible_positions, pj:p.projected_war, w:p.war_ytd, gp:p.games_played,
@@ -136,10 +152,13 @@ fetch(`${API}/players`).then(r=>r.json()).then(data=>setRaw(data.map(p=>({
   vol:p.volume??0, opp:p.opponent??"", tbk:p.tb_k??null,
   prH:p.price_history??[], wH:p.war_history??[]
 })))).catch(()=>{});
-}, []);
+}, [cur]);
 
 const refreshOwner = useCallback(() => {
-fetch(`${API}/owners/${cur}`).then(r=>r.json()).then(data=>setMe({
+if (!cur) return;
+fetch(`${API}/owners/${cur}`).then(r=>{
+  if(!r.ok){if(r.status===404){setCur(null)}throw new Error("not found")}return r.json()
+}).then(data=>setMe({
   id:data.id, nm:data.name,
   r:data.roster.map(e=>({pid:e.player_id,slot:e.slot,paid:e.purchase_price})),
   tx:data.transactions_this_week, budget:data.budget_remaining,
@@ -156,6 +175,56 @@ fetch(`${API}/leaderboard`).then(r=>r.json()).then(data=>setLb(data.map(e=>({
 }, []);
 
 useEffect(() => { refreshLb() }, [refreshLb]);
+
+// ── Login Animation Effects ──
+const WELCOME_MSG = `WAR STREET v1.0\n(C) 2026 Bureau of Baseball Securities\n\nInitializing market data feed...... OK\nLoading player valuations........... OK\nConnecting to trading floor......... OK\n\nREADY.`;
+
+useEffect(() => {
+  if (cur !== null || loginPhase !== "boot") return;
+  const steps = [0, 0.08, 0.15, 0.25, 0.4, 0.6, 0.8, 1.0];
+  const timers = steps.map((op, i) => setTimeout(() => {
+    setLogoOpacity(op);
+    if (i === steps.length - 1) setTimeout(() => setLoginPhase("typing"), 400);
+  }, i * 300));
+  return () => timers.forEach(clearTimeout);
+}, [cur, loginPhase]);
+
+useEffect(() => {
+  if (cur !== null || loginPhase !== "typing") return;
+  let i = 0;
+  const iv = setInterval(() => {
+    i++;
+    setTypedText(WELCOME_MSG.slice(0, i));
+    if (i >= WELCOME_MSG.length) { clearInterval(iv); setTimeout(() => setLoginPhase("menu"), 600); }
+  }, 40);
+  return () => clearInterval(iv);
+}, [cur, loginPhase]);
+
+useEffect(() => {
+  if (loginPhase === "menu" || loginPhase === "signin") {
+    fetch(`${API}/leaderboard`).then(r=>r.json()).then(data=>setLoginTeams(data.map(e=>({
+      id:e.owner_id, nm:e.name
+    })))).catch(()=>{});
+  }
+}, [loginPhase]);
+
+const doLogout = useCallback(() => {
+  setCur(null); setLoginPhase("boot"); setTypedText(""); setLogoOpacity(0);
+  setTeamName(""); setLoginError(null); setMenu(false);
+  setMe({ id:null, nm:"...", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
+  setRaw([]);
+}, []);
+
+const doCreateTeam = async () => {
+  if (!teamName.trim()) return;
+  setLoginError(null);
+  try {
+    const res = await fetch(`${API}/owners?name=${encodeURIComponent(teamName.trim())}`, { method: "POST" });
+    if (!res.ok) { const err = await res.json(); setLoginError(err.detail || "CREATE FAILED"); return; }
+    const data = await res.json();
+    setCur(data.id);
+  } catch(e) { setLoginError("NETWORK ERROR"); }
+};
 
 // ── Derived State ──
 const pl = raw;
@@ -245,6 +314,102 @@ setSel({...p,paid:me.r.find(x=>x.pid===p.id)?.paid});setTa("S");
 };
 
 // ═══════════════════════════════════════════════════════════
+//  LOGIN SCREEN (cur === null)
+// ═══════════════════════════════════════════════════════════
+if (cur === null) {
+  const loginMenu = (phase, setPhase) => {
+    if (phase === "menu") return (
+      <div style={{marginTop:16}}>
+        <div onClick={()=>setPhase("signin")} style={{cursor:"pointer",marginBottom:6}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>{"> [1] SIGN IN"}</div>
+        <div onClick={()=>setPhase("create")} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>{"> [2] CREATE NEW TEAM"}</div>
+      </div>
+    );
+    if (phase === "signin") return (
+      <div style={{marginTop:12}}>
+        <div style={{marginBottom:4}}>SELECT YOUR TEAM:</div>
+        <div style={{marginBottom:4}}>{"──────────────────────"}</div>
+        <div style={{maxHeight:200,overflowY:"auto"}}>
+          {loginTeams.length===0&&<div style={{opacity:0.5}}>Loading teams...</div>}
+          {loginTeams.map((t,i) => (
+            <div key={t.id} onClick={()=>setCur(t.id)} style={{cursor:"pointer",padding:"2px 0"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>
+              {` ${i+1}. ${t.nm}`}
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:4}}>{"──────────────────────"}</div>
+        <div onClick={()=>setLoginPhase("menu")} style={{cursor:"pointer",marginTop:4,opacity:0.6}} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0.6}>[BACK]</div>
+      </div>
+    );
+    if (phase === "create") return (
+      <div style={{marginTop:12}}>
+        <div style={{marginBottom:4}}>ENTER TEAM NAME:</div>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+          <span>{"> "}</span>
+          <input value={teamName} onChange={e=>setTeamName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")doCreateTeam()}}
+            autoFocus maxLength={30}
+            style={{background:"transparent",border:"none",borderBottom:"1px solid currentColor",color:"inherit",fontFamily:"inherit",fontSize:"inherit",padding:"2px 4px",width:"60%",outline:"none"}}/>
+        </div>
+        {loginError&&<div style={{color:"#ff3333",marginBottom:4}}>{loginError}</div>}
+        <div style={{display:"flex",gap:8}}>
+          <span onClick={doCreateTeam} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>[CREATE]</span>
+          <span onClick={()=>{setLoginPhase("menu");setLoginError(null);setTeamName("")}} style={{cursor:"pointer",opacity:0.6}} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0.6}>[BACK]</span>
+        </div>
+      </div>
+    );
+    return null;
+  };
+
+  // ── Desktop Login ──
+  if (!isMobile) return (
+    <div style={{background:"#2a2520",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@800&display=swap'); *{box-sizing:border-box} @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} .crt-login .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-login .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999}`}</style>
+      <div style={{position:"relative",width:"min(100vw, calc(100vh * 1080 / 608))",height:"min(100vh, calc(100vw * 608 / 1080))"}}>
+        <div className="crt-login" style={{position:"absolute",left:"28.70%",top:"2.80%",width:"46.67%",height:"68.26%",borderRadius:6,background:"#0a0a0a",overflow:"hidden",zIndex:1}}>
+          <div style={{width:"100%",height:"100%",overflow:"auto",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
+            <div className="crt" style={{position:"absolute",inset:0,pointerEvents:"none"}}/>
+            <div style={{position:"relative",zIndex:1001,textAlign:"center",padding:"20px 30px",maxWidth:420}}>
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:48,color:"#ff9900",letterSpacing:"3px",opacity:logoOpacity,transition:"none",textShadow:"0 0 20px rgba(255,153,0,0.3)"}}>WAR STREET</div>
+              <div style={{fontFamily:"'VT323',monospace",fontSize:16,color:"#555",marginTop:4,letterSpacing:"2px",opacity:logoOpacity}}>FANTASY BASEBALL STOCK MARKET</div>
+              {loginPhase !== "boot" && (
+                <div style={{fontFamily:"'VT323',monospace",fontSize:20,color:"#33ff33",textAlign:"left",marginTop:20,lineHeight:1.4}}>
+                  <pre style={{margin:0,fontFamily:"inherit",whiteSpace:"pre-wrap"}}>{typedText}<span style={{animation:"blink 1s step-end infinite"}}>█</span></pre>
+                  {loginMenu(loginPhase, setLoginPhase)}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <img src="/WAR-street/monitor-frame.png" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:2}}/>
+      </div>
+    </div>
+  );
+
+  // ── Mobile Login ──
+  const fg_m="#2d4a2d",bgc_m="#b8c8a0",brd_m="#8a9a72",lo_m="#7a8a62",vlo_m="#5a6a42";
+  return (
+    <div style={{background:"#1a1a1a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",marginTop:-10,maxWidth:"100vw"}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap'); @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}`}</style>
+      <div style={{position:"relative",width:"min(105vw, calc(105vh * 768 / 1376))",height:"min(105vh, calc(105vw * 1376 / 768))"}}>
+        <div style={{position:"absolute",left:"4.30%",top:"10.68%",width:"94.01%",height:"68.75%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1}}>
+          <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
+          <div style={{position:"relative",zIndex:4,textAlign:"center",padding:"10px 16px",maxWidth:"90%"}}>
+            <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:16,color:vlo_m,letterSpacing:"1px",opacity:logoOpacity}}>WAR STREET</div>
+            <div style={{fontSize:7,color:lo_m,marginTop:2,opacity:logoOpacity}}>FANTASY BASEBALL STOCK MARKET</div>
+            {loginPhase !== "boot" && (
+              <div style={{fontSize:8,color:fg_m,textAlign:"left",marginTop:10,lineHeight:1.5}}>
+                <pre style={{margin:0,fontFamily:"inherit",whiteSpace:"pre-wrap",fontSize:8}}>{typedText}<span style={{animation:"blink 1s step-end infinite"}}>█</span></pre>
+                {loginMenu(loginPhase, setLoginPhase)}
+              </div>
+            )}
+          </div>
+        </div>
+        <img src="/WAR-street/palm-frame.png" alt="" style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:2}}/>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
 //  MOBILE -- Palm Pilot
 // ═══════════════════════════════════════════════════════════
 if (isMobile) {
@@ -306,6 +471,8 @@ return (
             {["Profile","Settings"].map((l,i)=>
               <div key={i} onClick={()=>setMenu(false)} style={{padding:"4px 6px",fontSize:11,color:fg,cursor:"pointer"}}
                 onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{l}</div>)}
+            <div onClick={()=>{doLogout();setMenu(false)}} style={{padding:"4px 6px",fontSize:11,color:"#885555",cursor:"pointer"}}
+              onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Log Out</div>
             <div style={{padding:"3px 6px",fontSize:10,color:lo,borderBottom:`1px solid ${brd}`}}>SWITCH TEAM</div>
             <div style={{maxHeight:120,overflowY:"auto"}} className="palm-screen">
               {lb.map(o=>
@@ -490,6 +657,7 @@ return(
               <div style={{padding:"6px 14px",color:amb,borderBottom:`1px solid ${brd_d}`,fontSize:14}}>{me.nm}</div>
               {[["Profile Info",()=>{}],["Settings",()=>{}]].map(([label,fn],i)=>(
                 <div key={i} onClick={()=>{fn();setMenu(false)}} style={{padding:"8px 14px",cursor:"pointer",color:wh,fontSize:16}} onMouseEnter={e=>e.currentTarget.style.background="#111"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{label}</div>))}
+              <div onClick={()=>{doLogout();setMenu(false)}} style={{padding:"8px 14px",cursor:"pointer",color:neg,fontSize:16}} onMouseEnter={e=>e.currentTarget.style.background="#111"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Log Out</div>
               <div style={{padding:"6px 14px",borderBottom:`1px solid ${brd_d}`,fontSize:16,color:dim}}>SWITCH TEAM</div>
               <div style={{maxHeight:200,overflowY:"auto"}}>
                 {lb.map(o=>(
