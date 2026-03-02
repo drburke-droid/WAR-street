@@ -292,26 +292,27 @@ return (
                 <span key={k} onClick={()=>setSo(k)} style={{cursor:"pointer",color:so===k?bgc:lo,background:so===k?vlo:"transparent",padding:"1px 4px",borderRadius:1}}>{v}</span>)})}
               <input value={q} onChange={e=>setQ(e.target.value)} placeholder="find" style={{marginLeft:"auto",width:50,background:"transparent",border:`1px solid ${brd}`,color:fg,fontFamily:"inherit",fontSize:10,padding:"1px 3px"}}/>
             </div>
-            <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}}>
               <thead><tr>
-                <th style={{...th2,width:75}}>NAME</th>
-                <th style={{...th2,width:28}}>TM</th>
-                <th style={{...th2,width:12}}>PS</th>
-                <th style={{...th2,width:42}}>$</th>
-                <th style={{...th2,width:34,cursor:"pointer"}} onClick={cycleFrame}>Δ<span style={{color:vlo,fontSize:8}}>[{chgFrame}]</span></th>
-                <th style={{...th2,width:24}}>W</th>
-                <th style={{...th2,width:28}}></th>
+                <th style={{...th2,width:"28%"}}>NAME</th>
+                <th style={{...th2,width:"12%"}}>TM</th>
+                <th style={{...th2,width:"12%"}}>PS</th>
+                <th style={{...th2,width:"16%"}}>$</th>
+                <th style={{...th2,width:"14%",cursor:"pointer"}} onClick={cycleFrame}>Δ<span style={{color:vlo,fontSize:8}}>[{chgFrame}]</span></th>
+                <th style={{...th2,width:"8%"}}>W</th>
+                <th style={{...th2,width:"10%"}}></th>
               </tr></thead>
               <tbody>
                 {mk.map(p=>{
                   const mine=has(p.id);const ok=!mine&&fits(me.r,p);const no=!mine&&!ok;
                   const ch=simChg(p,chgFrame);
-                  const pos=[...new Set(p.el.map(dSlot))].join("/");
+                  const allPos=[...new Set(p.el.map(dSlot))];
+                  const pos=allPos.length>2?allPos.slice(0,2).join("/")+"/..":allPos.join("/");
                   return(
                     <tr key={p.id} style={{background:mine?hi:"transparent"}}>
-                      <td style={{...td2,color:mine?vlo:fg,fontWeight:mine?700:400,overflow:"hidden",textOverflow:"ellipsis",maxWidth:75}}>{p.nm}</td>
+                      <td style={{...td2,color:mine?vlo:fg,fontWeight:mine?700:400,overflow:"hidden",textOverflow:"ellipsis"}}>{p.nm}</td>
                       <td style={{...td2,color:lo,fontSize:10}}>{p.tm}</td>
-                      <td style={{...td2,fontSize:10}} title={pos}>{pos}</td>
+                      <td style={{...td2,fontSize:9}} title={allPos.join("/")}>{pos}</td>
                       <td style={{...td2,fontWeight:700}}>{f$(p.c)}</td>
                       <td style={td2}>{ch.pct>=0?"+":""}{ch.pct}%</td>
                       <td style={td2}>{p.w.toFixed(1)}</td>
