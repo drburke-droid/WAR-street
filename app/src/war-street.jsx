@@ -21,11 +21,28 @@ function fits(r,pl){return oSlots(r,pl.el).length>0}
 
 
 // ── Inline Sparkline ──
-const Spark = (pts, color, w=48, h=14) => {
+const Spark = (pts, color, w=48, h=14, threshold) => {
   if(!pts||!pts.length) return <span style={{color:"#1a1a1a"}}>---</span>;
   const mn=Math.min(...pts), mx=Math.max(...pts), rng=mx-mn||1;
-  const d=pts.map((v,i)=>`${(i/(pts.length-1))*w},${h-(((v-mn)/rng)*h)}`).join(" ");
-  return <svg width={w} height={h} style={{verticalAlign:"middle"}}><polyline points={d} fill="none" stroke={color} strokeWidth={1.2}/></svg>;
+  const px=(v,i)=>[(i/(pts.length-1))*w, h-(((v-mn)/rng)*h)];
+  if(threshold==null){
+    const d=pts.map((v,i)=>px(v,i).join(",")).join(" ");
+    return <svg width={w} height={h} style={{verticalAlign:"middle"}}><polyline points={d} fill="none" stroke={color} strokeWidth={1.2}/></svg>;
+  }
+  // Multi-color: green above threshold, red below, split at crossings
+  const segs=[];
+  const tY=h-(((threshold-mn)/rng)*h);
+  for(let i=0;i<pts.length-1;i++){
+    const [x1,y1]=px(pts[i],i),[x2,y2]=px(pts[i+1],i+1);
+    const a=pts[i]>=threshold, b=pts[i+1]>=threshold;
+    if(a===b){segs.push({x1,y1,x2,y2,c:a?"#33ff33":"#ff3333"})}
+    else{const t=(threshold-pts[i])/(pts[i+1]-pts[i]);const mx2=x1+t*(x2-x1);
+      segs.push({x1,y1,x2:mx2,y2:tY,c:a?"#33ff33":"#ff3333"});
+      segs.push({x1:mx2,y1:tY,x2,y2,c:b?"#33ff33":"#ff3333"})}
+  }
+  return <svg width={w} height={h} style={{verticalAlign:"middle"}}>{segs.map((s,i)=>
+    <line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.c} strokeWidth={1.2}/>
+  )}</svg>;
 };
 
 // ── useIsMobile Hook ──
@@ -98,8 +115,10 @@ const [ta, setTa] = useState("B");
 const [sl, setSl] = useState(null);
 const [msg, setMsg] = useState(null);
 const [chgFrame, setChgFrame] = useState("1D");
+const [sparkFrame, setSparkFrame] = useState("SZN");
 const [menu, setMenu] = useState(false);
 const frames = ["1D","1W","2W","1M"];
+const sparkFrames = ["1W","1M","SZN"];
 
 const [me, setMe] = useState({ id:1, nm:"...", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
 const [lb, setLb] = useState([]);
@@ -183,6 +202,7 @@ try{
 setSel(null);
 };
 const cycleFrame = () => { setChgFrame(f=>frames[(frames.indexOf(f)+1)%frames.length]) };
+const cycleSparkFrame = () => { setSparkFrame(f=>sparkFrames[(sparkFrames.indexOf(f)+1)%sparkFrames.length]) };
 
 const tickerItems = useMemo(() => [...pl].sort((a,b)=>b.c-a.c).filter(p=>p.c>=10_000_000).slice(0,30).map(p => {
 const ch = simChg(p,"1D");
@@ -489,7 +509,7 @@ return(
               <th style={{...th2_d,width:36}}>TM</th>
               <th style={{...th2_d,width:55}}>POS</th>
               <th style={{...th2_d,width:60}}>PRICE</th>
-              <th style={{...th2_d,width:48,textAlign:"center"}}>$</th>
+              <th style={{...th2_d,width:48,textAlign:"center",cursor:"pointer",userSelect:"none"}} onClick={cycleSparkFrame}>$ <span style={{color:amb}}>[{sparkFrame}]</span></th>
               <th style={{...th2_d,cursor:"pointer",userSelect:"none",width:55}} onClick={cycleFrame}>CHG <span style={{color:amb}}>[{chgFrame}]</span></th>
               <th style={{...th2_d,width:40}}>WAR</th>
               <th style={{...th2_d,width:50}}>VOL</th>
@@ -511,7 +531,7 @@ return(
                     <td style={{...td2_d,color:dim}}>{p.tm}</td>
                     <td style={{...td2_d,overflow:"hidden",textOverflow:"ellipsis"}} title={[...new Set(p.el.map(dSlot))].join("/")}>{[...new Set(p.el.map(dSlot))].join("/")}</td>
                     <td style={{...td2_d,color:wh}}>{f$(p.c)}</td>
-                    <td style={{...td2_d,textAlign:"center"}}>{Spark(p.prH,wh)}</td>
+                    <td style={{...td2_d,textAlign:"center"}}>{(()=>{const pts=sparkFrame==="1W"?p.prH.slice(-7):sparkFrame==="1M"?p.prH.slice(-30):p.prH;const open=p.prH.length?p.prH[0]:null;return Spark(pts,wh,48,14,open)})()}</td>
                     <td style={{...td2_d,color:ch.pct>=0?g:neg}}>{ch.pct>=0?"+":""}{ch.pct}%</td>
                     <td style={td2_d}>{p.w.toFixed(1)}</td>
                     <td style={td2_d}>
