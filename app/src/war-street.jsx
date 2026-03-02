@@ -229,9 +229,10 @@ const th2={...pad,color:lo,textAlign:"left",borderBottom:`1px solid ${brd}`,posi
 const td2={...pad,borderBottom:`1px solid ${brd}`,fontSize:12};
 
 return (
-  <div style={{background:"#1a1a1a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",marginTop:-10}}>
+  <div style={{background:"#1a1a1a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",marginTop:-10,maxWidth:"100vw"}}>
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap');
+      html,body{overflow-x:hidden !important}
       .palm-screen::-webkit-scrollbar{width:3px}
       .palm-screen::-webkit-scrollbar-thumb{background:${lo}}
       .palm-screen::-webkit-scrollbar-track{background:${bgc}}
@@ -262,7 +263,7 @@ return (
         {/* Flash */}
         {msg&&<div style={{position:"absolute",top:0,left:0,right:0,padding:"2px 4px",background:msg.e==="E"?"#c85555":vlo,color:bgc,fontSize:8,zIndex:20,textAlign:"center"}}>{msg.m}</div>}
 
-        {/* Header */}
+        {/* Header — overflowX hidden on all mobile content */}
         <div style={{padding:"3px 6px",borderBottom:`1px solid ${brd}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",gap:4}}>
             <span onClick={()=>setMenu(m=>!m)} style={{cursor:"pointer",fontSize:14,color:lo,lineHeight:1}}>☰</span>
@@ -301,7 +302,7 @@ return (
         </div>
 
         {/* Content */}
-        <div className="palm-screen" style={{flex:1,overflow:"auto",padding:"1px 0"}}>
+        <div className="palm-screen" style={{flex:1,overflowY:"auto",overflowX:"hidden",padding:"1px 0"}}>
           {/* MARKET */}
           {vw==="MKT"&&<div>
             <div style={{display:"flex",gap:3,padding:"2px 4px",alignItems:"center",fontSize:10,flexWrap:"wrap"}}>
@@ -348,9 +349,9 @@ return (
           </div>}
 
           {/* PORTFOLIO */}
-          {vw==="PORT"&&<div style={{padding:"0 2px"}}>
+          {vw==="PORT"&&<div style={{padding:"0 2px",overflowX:"hidden"}}>
             <div style={{fontSize:10,color:lo,padding:"2px 4px"}}>{me.nm}</div>
-            <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}}>
               <thead><tr>{["SL","PLAYER","$","PD","P/L","W",""].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
               <tbody>
                 {rE.map(({slot:s,p,paid})=>{
@@ -370,9 +371,9 @@ return (
           </div>}
 
           {/* STANDINGS */}
-          {vw==="RNK"&&<div style={{padding:"0 2px"}}>
+          {vw==="RNK"&&<div style={{padding:"0 2px",overflowX:"hidden"}}>
             <div style={{fontSize:10,color:lo,padding:"2px 4px"}}>STANDINGS</div>
-            <table style={{width:"100%",borderCollapse:"collapse"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}}>
               <thead><tr>{["#","TEAM","WAR","VAL"].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
               <tbody>
                 {lb.map((o,i)=><tr key={o.id} style={{background:o.id===cur?hi:"transparent"}}>
