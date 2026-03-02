@@ -226,8 +226,8 @@ return (
       {/* LCD Screen — positioned in the transparent cutout */}
       <div className="palm-screen" style={{
         position:"absolute",
-        left:"4.56%", top:"10.68%",
-        width:"93.49%", height:"68.60%",
+        left:"4.30%", top:"10.68%",
+        width:"94.01%", height:"68.75%",
         borderRadius: 12,
         background: bgc,
         overflow:"hidden",
