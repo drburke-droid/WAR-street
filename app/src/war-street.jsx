@@ -115,7 +115,9 @@ const [typedText, setTypedText] = useState("");
 const [logoOpacity, setLogoOpacity] = useState(0);
 const [teamName, setTeamName] = useState("");
 const [loginError, setLoginError] = useState(null);
-const [loginTeams, setLoginTeams] = useState([]);
+const [loginEmail, setLoginEmail] = useState("");
+const [loginPassword, setLoginPassword] = useState("");
+const [token, setToken] = useState(() => localStorage.getItem("warstreet_token"));
 const [ft, setFt] = useState("ALL");
 const [so, setSo] = useState("PRICE");
 const [q, setQ] = useState("");
@@ -140,7 +142,17 @@ const [leaders, setLeaders] = useState(null);
 useEffect(() => {
   if (cur !== null) localStorage.setItem("warstreet_owner", String(cur));
   else localStorage.removeItem("warstreet_owner");
-}, [cur]);
+  if (token) localStorage.setItem("warstreet_token", token);
+  else localStorage.removeItem("warstreet_token");
+}, [cur, token]);
+
+// ── authFetch: attach JWT to protected requests ──
+const authFetch = useCallback((url, opts = {}) => {
+  const headers = { ...opts.headers };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (opts.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+  return fetch(url, { ...opts, headers });
+}, [token]);
 
 // ── API Fetches ──
 useEffect(() => {
@@ -155,8 +167,9 @@ fetch(`${API}/players`).then(r=>r.json()).then(data=>setRaw(data.map(p=>({
 }, [cur]);
 
 const refreshOwner = useCallback(() => {
-if (!cur) return;
-fetch(`${API}/owners/${cur}`).then(r=>{
+if (!cur || !token) return;
+authFetch(`${API}/owners/${cur}`).then(r=>{
+  if(r.status===401){setCur(null);setToken(null);throw new Error("unauthorized")}
   if(!r.ok){if(r.status===404){setCur(null)}throw new Error("not found")}return r.json()
 }).then(data=>setMe({
   id:data.id, nm:data.name,
@@ -164,7 +177,7 @@ fetch(`${API}/owners/${cur}`).then(r=>{
   tx:data.transactions_this_week, budget:data.budget_remaining,
   pv:data.portfolio_value, tw:data.total_war
 })).catch(()=>{});
-}, [cur]);
+}, [cur, token, authFetch]);
 
 useEffect(() => { refreshOwner() }, [refreshOwner]);
 
@@ -200,29 +213,32 @@ useEffect(() => {
   return () => clearInterval(iv);
 }, [cur, loginPhase]);
 
-useEffect(() => {
-  if (loginPhase === "menu" || loginPhase === "signin") {
-    fetch(`${API}/leaderboard`).then(r=>r.json()).then(data=>setLoginTeams(data.map(e=>({
-      id:e.owner_id, nm:e.name
-    })))).catch(()=>{});
-  }
-}, [loginPhase]);
-
 const doLogout = useCallback(() => {
-  setCur(null); setLoginPhase("boot"); setTypedText(""); setLogoOpacity(0);
-  setTeamName(""); setLoginError(null); setMenu(false);
+  setCur(null); setToken(null); setLoginPhase("boot"); setTypedText(""); setLogoOpacity(0);
+  setTeamName(""); setLoginEmail(""); setLoginPassword(""); setLoginError(null); setMenu(false);
   setMe({ id:null, nm:"...", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
   setRaw([]);
 }, []);
 
-const doCreateTeam = async () => {
-  if (!teamName.trim()) return;
+const doLogin = async () => {
+  if (!loginEmail.trim() || !loginPassword) return;
   setLoginError(null);
   try {
-    const res = await fetch(`${API}/owners?name=${encodeURIComponent(teamName.trim())}`, { method: "POST" });
+    const res = await fetch(`${API}/auth/login`, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ email: loginEmail.trim(), password: loginPassword }) });
+    if (!res.ok) { const err = await res.json(); setLoginError(err.detail || "LOGIN FAILED"); return; }
+    const data = await res.json();
+    setToken(data.token); setCur(data.owner_id);
+  } catch(e) { setLoginError("NETWORK ERROR"); }
+};
+
+const doCreateTeam = async () => {
+  if (!teamName.trim() || !loginEmail.trim() || !loginPassword) return;
+  setLoginError(null);
+  try {
+    const res = await fetch(`${API}/auth/register`, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ email: loginEmail.trim(), password: loginPassword, team_name: teamName.trim() }) });
     if (!res.ok) { const err = await res.json(); setLoginError(err.detail || "CREATE FAILED"); return; }
     const data = await res.json();
-    setCur(data.id);
+    setToken(data.token); setCur(data.owner_id);
   } catch(e) { setLoginError("NETWORK ERROR"); }
 };
 
@@ -253,7 +269,8 @@ if(me.tx>=MAX_TX) return flash("NO TX LEFT","E");
 if(p.c>rem) return flash("NO FUNDS","E");
 if(!s) return flash("SELECT SLOT","E");
 try{
-  const res=await fetch(`${API}/transactions/buy`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({owner_id:cur,player_id:p.id,slot:s})});
+  const res=await authFetch(`${API}/transactions/buy`,{method:"POST",body:JSON.stringify({player_id:p.id,slot:s})});
+  if(res.status===401){doLogout();return flash("SESSION EXPIRED","E")}
   if(!res.ok){const err=await res.json();return flash(err.detail||"BUY FAILED","E")}
   const data=await res.json();
   flash(`BUY ${data.player} > ${dSlot(data.slot)} @ ${f$(data.price)}`);
@@ -265,7 +282,8 @@ const sell = async (p) => {
 if(me.tx>=MAX_TX) return flash("NO TX LEFT","E");
 const e=me.r.find(x=>x.pid===p.id);
 try{
-  const res=await fetch(`${API}/transactions/sell`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({owner_id:cur,player_id:p.id,slot:e?.slot})});
+  const res=await authFetch(`${API}/transactions/sell`,{method:"POST",body:JSON.stringify({player_id:p.id,slot:e?.slot})});
+  if(res.status===401){doLogout();return flash("SESSION EXPIRED","E")}
   if(!res.ok){const err=await res.json();return flash(err.detail||"SELL FAILED","E")}
   const data=await res.json();
   const pl2=data.price-(e?.paid||0);
@@ -317,42 +335,61 @@ setSel({...p,paid:me.r.find(x=>x.pid===p.id)?.paid});setTa("S");
 //  LOGIN SCREEN (cur === null)
 // ═══════════════════════════════════════════════════════════
 if (cur === null) {
+  const loginInputStyle = {background:"transparent",border:"none",borderBottom:"1px solid currentColor",color:"inherit",fontFamily:"inherit",fontSize:"inherit",padding:"2px 4px",width:"60%",outline:"none"};
+  const clearLoginFields = () => { setLoginEmail(""); setLoginPassword(""); setTeamName(""); setLoginError(null); };
+
   const loginMenu = (phase, setPhase) => {
     if (phase === "menu") return (
       <div style={{marginTop:16}}>
-        <div onClick={()=>setPhase("signin")} style={{cursor:"pointer",marginBottom:6}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>{"> [1] SIGN IN"}</div>
-        <div onClick={()=>setPhase("create")} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>{"> [2] CREATE NEW TEAM"}</div>
+        <div onClick={()=>{clearLoginFields();setPhase("signin")}} style={{cursor:"pointer",marginBottom:6}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>{"> [1] SIGN IN"}</div>
+        <div onClick={()=>{clearLoginFields();setPhase("create")}} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>{"> [2] CREATE NEW TEAM"}</div>
       </div>
     );
     if (phase === "signin") return (
       <div style={{marginTop:12}}>
-        <div style={{marginBottom:4}}>SELECT YOUR TEAM:</div>
+        <div style={{marginBottom:4}}>ENTER CREDENTIALS:</div>
         <div style={{marginBottom:4}}>{"──────────────────────"}</div>
-        <div style={{maxHeight:200,overflowY:"auto"}}>
-          {loginTeams.length===0&&<div style={{opacity:0.5}}>Loading teams...</div>}
-          {loginTeams.map((t,i) => (
-            <div key={t.id} onClick={()=>setCur(t.id)} style={{cursor:"pointer",padding:"2px 0"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>
-              {` ${i+1}. ${t.nm}`}
-            </div>
-          ))}
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+          <span>EMAIL:</span>
+          <input value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} autoFocus
+            style={loginInputStyle}/>
         </div>
-        <div style={{marginTop:4}}>{"──────────────────────"}</div>
-        <div onClick={()=>setLoginPhase("menu")} style={{cursor:"pointer",marginTop:4,opacity:0.6}} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0.6}>[BACK]</div>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+          <span>PASS:</span>
+          <input value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} type="password"
+            onKeyDown={e=>{if(e.key==="Enter")doLogin()}}
+            style={loginInputStyle}/>
+        </div>
+        {loginError&&<div style={{color:"#ff3333",marginBottom:4}}>{loginError}</div>}
+        <div style={{display:"flex",gap:8}}>
+          <span onClick={doLogin} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>[LOGIN]</span>
+          <span onClick={()=>{setLoginPhase("menu");clearLoginFields()}} style={{cursor:"pointer",opacity:0.6}} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0.6}>[BACK]</span>
+        </div>
       </div>
     );
     if (phase === "create") return (
       <div style={{marginTop:12}}>
-        <div style={{marginBottom:4}}>ENTER TEAM NAME:</div>
+        <div style={{marginBottom:4}}>CREATE NEW TEAM:</div>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+          <span>NAME:</span>
+          <input value={teamName} onChange={e=>setTeamName(e.target.value)} autoFocus maxLength={30}
+            style={loginInputStyle}/>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+          <span>EMAIL:</span>
+          <input value={loginEmail} onChange={e=>setLoginEmail(e.target.value)}
+            style={loginInputStyle}/>
+        </div>
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-          <span>{"> "}</span>
-          <input value={teamName} onChange={e=>setTeamName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")doCreateTeam()}}
-            autoFocus maxLength={30}
-            style={{background:"transparent",border:"none",borderBottom:"1px solid currentColor",color:"inherit",fontFamily:"inherit",fontSize:"inherit",padding:"2px 4px",width:"60%",outline:"none"}}/>
+          <span>PASS:</span>
+          <input value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} type="password"
+            onKeyDown={e=>{if(e.key==="Enter")doCreateTeam()}}
+            style={loginInputStyle}/>
         </div>
         {loginError&&<div style={{color:"#ff3333",marginBottom:4}}>{loginError}</div>}
         <div style={{display:"flex",gap:8}}>
           <span onClick={doCreateTeam} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>[CREATE]</span>
-          <span onClick={()=>{setLoginPhase("menu");setLoginError(null);setTeamName("")}} style={{cursor:"pointer",opacity:0.6}} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0.6}>[BACK]</span>
+          <span onClick={()=>{setLoginPhase("menu");clearLoginFields()}} style={{cursor:"pointer",opacity:0.6}} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0.6}>[BACK]</span>
         </div>
       </div>
     );
@@ -476,12 +513,6 @@ return (
                 onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{l}</div>)}
             <div onClick={()=>{doLogout();setMenu(false)}} style={{padding:"4px 6px",fontSize:11,color:"#885555",cursor:"pointer"}}
               onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Log Out</div>
-            <div style={{padding:"3px 6px",fontSize:10,color:lo,borderBottom:`1px solid ${brd}`}}>SWITCH TEAM</div>
-            <div style={{maxHeight:120,overflowY:"auto"}} className="palm-screen">
-              {lb.map(o=>
-                <div key={o.id} onClick={()=>{setCur(o.id);setMenu(false)}} style={{padding:"2px 6px",fontSize:10,cursor:"pointer",color:o.id===cur?vlo:fg,fontWeight:o.id===cur?700:400}}
-                  onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{o.nm}{o.id===cur?" ◄":""}</div>)}
-            </div>
           </div>
         </>}
 
@@ -661,11 +692,6 @@ return(
               {[["Profile Info",()=>{}],["Settings",()=>{}]].map(([label,fn],i)=>(
                 <div key={i} onClick={()=>{fn();setMenu(false)}} style={{padding:"8px 14px",cursor:"pointer",color:wh,fontSize:16}} onMouseEnter={e=>e.currentTarget.style.background="#111"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{label}</div>))}
               <div onClick={()=>{doLogout();setMenu(false)}} style={{padding:"8px 14px",cursor:"pointer",color:neg,fontSize:16}} onMouseEnter={e=>e.currentTarget.style.background="#111"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Log Out</div>
-              <div style={{padding:"6px 14px",borderBottom:`1px solid ${brd_d}`,fontSize:16,color:dim}}>SWITCH TEAM</div>
-              <div style={{maxHeight:200,overflowY:"auto"}}>
-                {lb.map(o=>(
-                  <div key={o.id} onClick={()=>{setCur(o.id);setMenu(false)}} style={{padding:"6px 14px",cursor:"pointer",color:o.id===cur?amb:wh,fontSize:16}} onMouseEnter={e=>e.currentTarget.style.background="#111"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{o.nm}{o.id===cur?" ◄":""}</div>))}
-              </div>
             </div>
           </>)}
         </div>

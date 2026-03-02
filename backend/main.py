@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routes import players, owners, transactions, leaderboard, boxscores
+from routes import auth, players, owners, transactions, leaderboard, boxscores
 
 app = FastAPI(title="WAR STREET API", version="1.0.0")
 
@@ -25,6 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(players.router)
 app.include_router(owners.router)
 app.include_router(transactions.router)

@@ -1,12 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from auth import get_current_owner
 from db.client import get_supabase
-from models.owner import OwnerOut, OwnerDetail, RosterEntry
+from models.owner import OwnerDetail, RosterEntry
 
 router = APIRouter(prefix="/owners", tags=["owners"])
 
 
 @router.get("/{owner_id}", response_model=OwnerDetail)
-def get_owner(owner_id: int):
+def get_owner(owner_id: int, token_owner: int = Depends(get_current_owner)):
+    if token_owner != owner_id:
+        raise HTTPException(403, "Not authorized to view this owner")
+
     sb = get_supabase()
 
     # Fetch owner
@@ -48,20 +52,4 @@ def get_owner(owner_id: int):
         total_war=float(o["total_war"] or 0),
         roster=roster,
         portfolio_value=portfolio_value,
-    )
-
-
-@router.post("", response_model=OwnerOut)
-def create_owner(name: str):
-    sb = get_supabase()
-    result = sb.table("owners").insert({"name": name}).execute()
-    if not result.data:
-        raise HTTPException(400, "Could not create owner")
-    o = result.data[0]
-    return OwnerOut(
-        id=o["id"],
-        name=o["name"],
-        budget_remaining=o["budget_remaining"],
-        transactions_this_week=o["transactions_this_week"],
-        total_war=float(o["total_war"] or 0),
     )
