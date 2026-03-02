@@ -105,7 +105,8 @@ return (
 export default function App() {
 const isMobile = useIsMobile();
 const [raw, setRaw] = useState([]);
-const [vw, setVw] = useState("MKT");
+const [vw, setVw] = useState("PORT");
+const palmScrollRef = useRef(null);
 const [cur, setCur] = useState(() => {
   const saved = localStorage.getItem("warstreet_owner");
   return saved ? parseInt(saved, 10) : null;
@@ -599,7 +600,7 @@ return (
         </div>
 
         {/* Content */}
-        <div className="palm-screen palm-scroll" style={{flex:1,overflowY:"auto",overflowX:"hidden",overscrollBehavior:"contain",padding:"1px 0"}}>
+        <div ref={palmScrollRef} className="palm-screen palm-scroll" style={{flex:1,overflowY:"auto",overflowX:"hidden",overscrollBehavior:"contain",padding:"1px 0"}}>
           {/* MARKET */}
           {vw==="MKT"&&<div>
             <div style={{display:"flex",gap:3,padding:"2px 4px",alignItems:"center",fontSize:10,flexWrap:"wrap"}}>
@@ -648,6 +649,20 @@ return (
           {/* PORTFOLIO */}
           {vw==="PORT"&&<div style={{padding:"0 2px",overflowX:"hidden"}}>
             <div style={{fontSize:10,color:lo,padding:"2px 4px"}}>{me.nm}</div>
+            {me.r.length===0?<div style={{padding:"6px 6px",fontSize:10,lineHeight:1.6,color:fg}}>
+              <div style={{fontWeight:700,fontSize:11,color:vlo,marginBottom:4}}>WELCOME TO WAR STREET</div>
+              <div style={{marginBottom:4}}>You manage a fantasy baseball team. Buy and sell MLB players like stocks — their prices move with on-field performance and demand.</div>
+              <div style={{marginBottom:6,color:vlo,fontWeight:700,cursor:"pointer"}} onClick={()=>setVw("MKT")}>{"> GO TO MARKET TO BUY PLAYERS"}</div>
+              <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>BUDGET</span> ${BUDGET/1e6}M to fill 13 roster slots</div>
+              <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>GOAL</span> Highest cumulative WAR at season end wins</div>
+              <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>TX</span> {MAX_TX} transactions per week (buy or sell)</div>
+            </div>
+            :<>
+            <div style={{display:"flex",justifyContent:"space-between",padding:"2px 4px",fontSize:10,color:lo}}>
+              <span>WAR: <span style={{color:fg,fontWeight:700}}>{me.tw.toFixed(1)}</span></span>
+              <span>Val: <span style={{color:fg,fontWeight:700}}>{f$(me.pv)}</span></span>
+              <span>Left: <span style={{color:fg,fontWeight:700}}>{f$(me.budget)}</span></span>
+            </div>
             <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}}>
               <thead><tr>{["SL","PLAYER","$","PD","P/L","W",""].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
               <tbody>
@@ -665,6 +680,7 @@ return (
                   </tr>})}
               </tbody>
             </table>
+            </>}
           </div>}
 
           {/* STANDINGS */}
@@ -691,6 +707,15 @@ return (
               <div key={i}><span style={{color:vlo,fontWeight:700}}>{t}</span> <span style={{color:fg}}>{d}</span></div>)}
           </div>}
         </div>
+
+        {/* Button legend — pinned to bottom of LCD when roster is empty */}
+        {vw==="PORT"&&me.r.length===0&&<div style={{flexShrink:0,padding:"3px 6px 4px",borderTop:`1px solid ${brd}`,fontSize:8,color:lo,display:"flex",justifyContent:"space-between",gap:1,textAlign:"center"}}>
+          {["Scores","Portfolio","Scroll","Market","Settings"].map((lbl,i)=>
+            <div key={i} style={{flex:1,lineHeight:1.2}}>
+              <div style={{fontWeight:700,color:fg}}>{lbl}</div>
+              <div style={{color:brd,fontSize:9}}>v</div>
+            </div>)}
+        </div>}
 
         {/* Modal */}
         {sel&&<div onClick={()=>setSel(null)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.3)",zIndex:20,display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -724,8 +749,22 @@ return (
         zIndex:2,
       }}/>
 
-      {/* Newspaper button hotspot — leftmost physical button on Palm */}
-      <div onClick={openPaper} style={{position:"absolute",left:"8%",top:"82%",width:"18%",height:"7%",zIndex:3,cursor:"pointer"}} title="Yesterday's Box Scores"/>
+      {/* Palm physical button hotspots */}
+      {(()=>{
+        const DBG = false;
+        const bst = (left,top,w,h,color) => ({position:"absolute",left,top,width:w,height:h,zIndex:3,cursor:"pointer",borderRadius:h==="7.6%"||h==="7.4%"||h==="7%"||h==="7.1%"?"50%":"40%",
+          ...(DBG?{background:color,opacity:0.5,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:700,fontFamily:"sans-serif"}:{})
+        });
+        const scrollBy = (dir) => { if(palmScrollRef.current) palmScrollRef.current.scrollBy({top:dir*80,behavior:"smooth"}); };
+        return <>
+          <div onClick={openPaper} style={bst("5.5%","84.9%","14.8%","7.4%","rgba(255,0,0,0.7)")} title="Box Scores"/>
+          <div onClick={()=>setVw("PORT")} style={bst("25.8%","84.7%","14.8%","7.6%","rgba(0,180,0,0.7)")} title="Portfolio"/>
+          <div onClick={()=>scrollBy(-1)} style={bst("44.5%","85.6%","14.1%","3.3%","rgba(0,100,255,0.7)")} title="Scroll Up"/>
+          <div onClick={()=>scrollBy(1)} style={bst("44.5%","91.9%","13.8%","1.5%","rgba(0,200,200,0.7)")} title="Scroll Down"/>
+          <div onClick={()=>setVw("MKT")} style={bst("64.1%","85.2%","14.3%","7%","rgba(255,140,0,0.7)")} title="Market"/>
+          <div onClick={()=>setMenu(m=>!m)} style={bst("84.6%","85%","10.2%","7.1%","rgba(160,0,220,0.7)")} title="Settings"/>
+        </>;
+      })()}
     </div>
 
     {/* Mobile newspaper overlay — at viewport level, outside Palm container */}
