@@ -482,7 +482,7 @@ return(
           <input value={q} onChange={e=>setQ(e.target.value)} placeholder="> search" style={{marginLeft:"auto",background:"transparent",border:`1px solid ${brd_d}`,color:g,fontFamily:"inherit",fontSize:16,padding:"2px 8px",width:180}}/>
         </div>
         <div style={{maxHeight:"calc(100vh - 200px)",overflowY:"auto",overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",minWidth:900,tableLayout:"fixed"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",minWidth:750,tableLayout:"fixed"}}>
             <thead><tr>
               <th style={{...th2_d,position:"sticky",left:0,zIndex:3,background:bg,width:110}}>PLAYER</th>
               <th style={{...th2_d,width:40,textAlign:"center"}}></th>
@@ -492,9 +492,7 @@ return(
               <th style={{...th2_d,width:48,textAlign:"center"}}>$</th>
               <th style={{...th2_d,cursor:"pointer",userSelect:"none",width:55}} onClick={cycleFrame}>CHG <span style={{color:amb}}>[{chgFrame}]</span></th>
               <th style={{...th2_d,width:40}}>WAR</th>
-              <th style={{...th2_d,width:48,textAlign:"center"}}>W</th>
               <th style={{...th2_d,width:50}}>VOL</th>
-              <th style={{...th2_d,width:36}}>OPP</th>
               <th style={{...th2_d,width:36}}>TB/K</th>
             </tr></thead>
             <tbody>
@@ -516,14 +514,12 @@ return(
                     <td style={{...td2_d,textAlign:"center"}}>{Spark(p.prH,wh)}</td>
                     <td style={{...td2_d,color:ch.pct>=0?g:neg}}>{ch.pct>=0?"+":""}{ch.pct}%</td>
                     <td style={td2_d}>{p.w.toFixed(1)}</td>
-                    <td style={{...td2_d,textAlign:"center"}}>{Spark(p.wH,g)}</td>
                     <td style={td2_d}>
                       <div style={{display:"inline-block",verticalAlign:"middle",width:30,height:6,background:"#1a1a1a",marginRight:4}}>
                         <div style={{width:`${vol}%`,height:"100%",background:vol>66?amb:vol>33?g:dim}}/>
                       </div>
                       <span style={{fontSize:12}}>{vol}</span>
                     </td>
-                    <td style={{...td2_d,color:p.opp?dim:"#1a1a1a",fontSize:14}}>{p.opp||"--"}</td>
                     <td style={{...td2_d,color:p.tbk!=null?wh:"#1a1a1a",fontSize:14}}>{p.tbk!=null?p.tbk:"--"}</td>
                   </tr>);
               })}
