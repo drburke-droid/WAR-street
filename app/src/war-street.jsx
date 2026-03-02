@@ -209,7 +209,7 @@ const th2={...pad,color:lo,textAlign:"left",borderBottom:`1px solid ${brd}`,posi
 const td2={...pad,borderBottom:`1px solid ${brd}`,fontSize:9};
 
 return (
-  <div style={{background:"#1a1a1a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden"}}>
+  <div style={{background:"#1a1a1a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",marginTop:-10}}>
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap');
       .palm-screen::-webkit-scrollbar{width:3px}
