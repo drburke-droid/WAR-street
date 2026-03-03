@@ -1,6 +1,6 @@
 """Buy/sell logic with slot validation, budget checks, and transaction limits."""
 
-from datetime import date
+from datetime import date, datetime, timezone
 from fastapi import HTTPException
 from db.client import get_supabase
 
@@ -8,6 +8,7 @@ HITTER_SLOTS = {"C", "1B", "2B", "3B", "SS", "OF1", "OF2", "OF3"}
 PITCHER_SLOTS = {"SP1", "SP2", "SP3", "SP4", "RP"}
 ALL_SLOTS = HITTER_SLOTS | PITCHER_SLOTS
 MAX_TX_PER_WEEK = 6
+PITCHER_HOLD_DAYS = 14
 OPENING_DAY = date(2026, 3, 26)
 
 
@@ -147,6 +148,15 @@ def sell_player(owner_id: int, player_id: int, slot: str) -> dict:
     )
     if not entry.data:
         raise HTTPException(404, "Player not in that roster slot")
+
+    # Pitcher hold: 14-day minimum hold (skipped during preseason)
+    if not _is_preseason() and slot in PITCHER_SLOTS:
+        purchased_at = datetime.fromisoformat(entry.data["purchased_at"])
+        days_held = (datetime.now(timezone.utc) - purchased_at).days
+        if days_held < PITCHER_HOLD_DAYS:
+            remaining = PITCHER_HOLD_DAYS - days_held
+            raise HTTPException(400,
+                f"Pitcher hold: {remaining} day(s) remaining (14-day minimum)")
 
     # Get current price for sell value
     player = sb.table("players").select("*").eq("id", player_id).single().execute()

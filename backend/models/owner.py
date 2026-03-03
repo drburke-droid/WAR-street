@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 
 
@@ -20,6 +21,7 @@ class RosterEntry(BaseModel):
     current_price: int
     purchase_price: int
     war_ytd: float
+    purchased_at: datetime
 
 
 class OwnerDetail(OwnerOut):

@@ -12,6 +12,8 @@ const isPreseason = () => new Date() < OPENING_DAY;
 const HSLOTS = ["C","1B","2B","3B","SS","OF1","OF2","OF3"];
 const PSLOTS = ["SP1","SP2","SP3","SP4","RP"];
 const SLOTS = [...HSLOTS,...PSLOTS];
+const P_HOLD = 14;
+const holdDays = (slot,pat) => { if(!PSLOTS.includes(slot)||!pat||isPreseason()) return 0; const d=Math.floor((Date.now()-new Date(pat).getTime())/864e5); return Math.max(P_HOLD-d,0) };
 const dSlot = s => s.replace(/\d+$/,"");
 const GP = 45;
 
@@ -182,7 +184,7 @@ authFetch(`${API}/owners/${cur}`).then(r=>{
   if(!r.ok){if(r.status===404){setCur(null)}throw new Error("not found")}return r.json()
 }).then(data=>setMe({
   id:data.id, nm:data.name,
-  r:data.roster.map(e=>({pid:e.player_id,slot:e.slot,paid:e.purchase_price})),
+  r:data.roster.map(e=>({pid:e.player_id,slot:e.slot,paid:e.purchase_price,pat:e.purchased_at})),
   tx:data.transactions_this_week, budget:data.budget_remaining,
   pv:data.portfolio_value, tw:data.total_war
 })).catch(()=>{});
@@ -294,6 +296,8 @@ setSel(null);
 const sell = async (p) => {
 if(!isPreseason()&&me.tx>=MAX_TX) return flash("NO TX LEFT","E");
 const e=me.r.find(x=>x.pid===p.id);
+const hd=holdDays(e?.slot,e?.pat);
+if(hd>0) return flash(`HOLD ${hd}D (pitcher)`,"E");
 try{
   const res=await authFetch(`${API}/transactions/sell`,{method:"POST",body:JSON.stringify({player_id:p.id,slot:e?.slot})});
   if(res.status===401){doLogout();return flash("SESSION EXPIRED","E")}
@@ -341,7 +345,8 @@ const ds=[...new Set(os.map(dSlot))];
 setSel(p);setTa("B");setSl(ds.length===1?os[0]:null);
 };
 const openSell = (p) => {
-setSel({...p,paid:me.r.find(x=>x.pid===p.id)?.paid});setTa("S");
+const e=me.r.find(x=>x.pid===p.id);
+setSel({...p,paid:e?.paid,pat:e?.pat,rSlot:e?.slot});setTa("S");
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -751,9 +756,11 @@ return (
               {(()=>{const mf=minFill([...me.r,...(sl?[{slot:sl}]:[])],raw);return mf.slots>0?<div style={{fontSize:12,marginBottom:4,color:rem-sel.c<mf.cost?"#885555":lo}}>RESERVE: ${f$(mf.cost)} ({mf.slots} slots)</div>:null})()}
             </>}
             {ta==="S"&&sel.paid!=null&&<div style={{fontSize:12,marginBottom:4}}><span style={{color:lo}}>Paid: </span>{f$(sel.paid)}<span style={{color:lo}}> P/L: </span>{(()=>{const x=sel.c-sel.paid;return<span style={{color:x>=0?vlo:"#885555"}}>{x>=0?"+":""}{f$(x)}</span>})()}</div>}
-            <div style={{display:"flex",gap:4}}>
+            {ta==="S"&&(()=>{const hd=holdDays(sel.rSlot,sel.pat);return hd>0?<div style={{fontSize:12,marginBottom:4,color:"#885555"}}>HOLD: {hd}d remaining (pitcher)</div>:null})()}
+            {(()=>{const locked=ta==="S"&&holdDays(sel.rSlot,sel.pat)>0;return<div style={{display:"flex",gap:4}}>
               <span onClick={()=>setSel(null)} style={{cursor:"pointer",padding:"2px 8px",border:`1px solid ${brd}`,fontSize:13,color:lo}}>CANCEL</span>
-              <span onClick={()=>ta==="B"?buy(sel,sl):sell(sel)} style={{cursor:(ta==="B"&&!sl)?"default":"pointer",padding:"2px 8px",fontSize:13,fontWeight:700,border:`1px solid ${fg}`,color:bgc,background:ta==="B"?(sl?vlo:brd):"#885555",opacity:(ta==="B"&&!sl) ? 0.4 : 1}}>{ta==="B"?`BUY > ${sl?dSlot(sl):"..."}`:"SELL"}</span>
+              <span onClick={()=>!locked&&(ta==="B"?buy(sel,sl):sell(sel))} style={{cursor:(ta==="B"&&!sl)||locked?"default":"pointer",padding:"2px 8px",fontSize:13,fontWeight:700,border:`1px solid ${fg}`,color:bgc,background:ta==="B"?(sl?vlo:brd):locked?brd:"#885555",opacity:(ta==="B"&&!sl)||locked ? 0.4 : 1}}>{ta==="B"?`BUY > ${sl?dSlot(sl):"..."}`:locked?"LOCKED":"SELL"}</span>
+            </div>})()}
             </div>
           </div>
         </div>}
@@ -1169,10 +1176,11 @@ return(
             <span style={{color:dim,marginLeft:12}}>P/L </span>
             {(()=>{const x=sel.c-sel.paid;return<span style={{color:x>=0?g:neg}}>{x>=0?"+":""}{f$(x)}</span>})()}
           </div>)}
-        <div style={{display:"flex",gap:8,marginTop:4}}>
+        {ta==="S"&&(()=>{const hd=holdDays(sel.rSlot,sel.pat);return hd>0?<div style={{marginBottom:8,fontSize:16,color:neg}}>HOLD: {hd}d remaining (pitcher)</div>:null})()}
+        {(()=>{const locked=ta==="S"&&holdDays(sel.rSlot,sel.pat)>0;return<div style={{display:"flex",gap:8,marginTop:4}}>
           <span onClick={()=>setSel(null)} style={{cursor:"pointer",color:dim,padding:"3px 12px",border:`1px solid ${brd_d}`}}>CANCEL</span>
-          <span onClick={()=>ta==="B"?buy(sel,sl):sell(sel)} style={{cursor:(ta==="B"&&!sl)?"default":"pointer",color:bg,fontWeight:700,padding:"3px 16px",background:ta==="B"?(sl?g:"#333"):neg,opacity:(ta==="B"&&!sl) ? 0.3 : 1}}>{ta==="B"?`BUY > ${sl?dSlot(sl):"..."}`:"SELL"}</span>
-        </div>
+          <span onClick={()=>!locked&&(ta==="B"?buy(sel,sl):sell(sel))} style={{cursor:(ta==="B"&&!sl)||locked?"default":"pointer",color:bg,fontWeight:700,padding:"3px 16px",background:ta==="B"?(sl?g:"#333"):locked?"#333":neg,opacity:(ta==="B"&&!sl)||locked ? 0.3 : 1}}>{ta==="B"?`BUY > ${sl?dSlot(sl):"..."}`:locked?"LOCKED":"SELL"}</span>
+        </div>})()}
         <div style={{color:"#222",marginTop:6,fontSize:20}}>{MAX_TX-me.tx} tx remaining</div>
       </div>
     </div>)}

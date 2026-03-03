@@ -22,7 +22,7 @@ def get_owner(owner_id: int, token_owner: int = Depends(get_current_owner)):
     # Fetch roster with player details
     roster_rows = (
         sb.table("roster_entries")
-        .select("slot, purchase_price, player_id, players(name, team, position, current_price, war_ytd)")
+        .select("slot, purchase_price, purchased_at, player_id, players(name, team, position, current_price, war_ytd)")
         .eq("owner_id", owner_id)
         .execute()
     )
@@ -42,6 +42,7 @@ def get_owner(owner_id: int, token_owner: int = Depends(get_current_owner)):
             current_price=curr_price,
             purchase_price=r["purchase_price"],
             war_ytd=float(p["war_ytd"] or 0),
+            purchased_at=r["purchased_at"],
         ))
 
     return OwnerDetail(
