@@ -203,6 +203,13 @@ Use `pybaseball.playerid_lookup` for MLB ↔ FanGraphs cross-reference.
 - **Font loading:** Both Silkscreen and VT323 load from Google Fonts via `@import` in a `<style>` tag. If fonts don’t load, the UI falls back to monospace.
 - **Responsive breakpoint:** 768px. Resize browser window to test both UIs on desktop.
 
+## Known Bugs
+
+- transaction limit of 6 makes it impossible to fill out a roster prior to opening day.  Lets suspend the transaction limits until opening day.
+- the portfolio page has player names running into their price.  Clean this up by shrinking position column and maybe remiving non-critical columns.
+- the version of the app that launches from a saved to homescreen icon is too far shifted upwards vertically. when opening the newspaper on mobile the masthead id overlaying the notch, and the X is unable to be pressed.
+
+
 ## File Structure
 
 ```
