@@ -7,6 +7,8 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 const API = import.meta.env.DEV ? "http://localhost:8000" : "https://war-street-production.up.railway.app";
 const BUDGET = 300_000_000;
 const MAX_TX = 6;
+const OPENING_DAY = new Date("2026-03-26T00:00:00");
+const isPreseason = () => new Date() < OPENING_DAY;
 const HSLOTS = ["C","1B","2B","3B","SS","OF1","OF2","OF3"];
 const PSLOTS = ["SP1","SP2","SP3","SP4","RP"];
 const SLOTS = [...HSLOTS,...PSLOTS];
@@ -273,7 +275,7 @@ l.sort(ss[so]||ss.PRICE); return l;
 const flash = useCallback((m,e) => { setMsg({m,e}); setTimeout(()=>setMsg(null),2500) },[]);
 
 const buy = async (p,s) => {
-if(me.tx>=MAX_TX) return flash("NO TX LEFT","E");
+if(!isPreseason()&&me.tx>=MAX_TX) return flash("NO TX LEFT","E");
 if(p.c>rem) return flash("NO FUNDS","E");
 if(!s) return flash("SELECT SLOT","E");
 try{
@@ -287,7 +289,7 @@ try{
 setSel(null);
 };
 const sell = async (p) => {
-if(me.tx>=MAX_TX) return flash("NO TX LEFT","E");
+if(!isPreseason()&&me.tx>=MAX_TX) return flash("NO TX LEFT","E");
 const e=me.r.find(x=>x.pid===p.id);
 try{
   const res=await authFetch(`${API}/transactions/sell`,{method:"POST",body:JSON.stringify({player_id:p.id,slot:e?.slot})});
@@ -494,7 +496,7 @@ if (cur === null) {
   // ── Mobile Login ──
   const fg_m="#2d4a2d",bgc_m="#b8c8a0",brd_m="#8a9a72",lo_m="#7a8a62",vlo_m="#5a6a42";
   return (
-    <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
+    <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:0,paddingTop:"env(safe-area-inset-top)",overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap'); @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important;touch-action:none} .palm-login input{caret-color:#2d4a2d}`}</style>
       <div style={{position:"relative",width:"min(120vw, calc(120vh * 768 / 1376))",height:"min(120vh, calc(120vw * 1376 / 768))",touchAction:"none"}}>
         <div className="palm-login" style={{position:"absolute",left:"4.30%",top:"10.68%",width:"94.01%",height:"68.75%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1,touchAction:"none"}}>
@@ -526,7 +528,7 @@ const th2={...pad,color:lo,textAlign:"left",borderBottom:`1px solid ${brd}`,posi
 const td2={...pad,borderBottom:`1px solid ${brd}`,fontSize:14};
 
 return (
-  <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
+  <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:0,paddingTop:"env(safe-area-inset-top)",overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap');
       @import url('https://fonts.cdnfonts.com/css/rojal');
@@ -655,7 +657,7 @@ return (
               <div style={{marginBottom:6,color:vlo,fontWeight:700,cursor:"pointer"}} onClick={()=>setVw("MKT")}>{"> GO TO MARKET TO BUY PLAYERS"}</div>
               <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>BUDGET</span> ${BUDGET/1e6}M to fill 13 roster slots</div>
               <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>GOAL</span> Highest cumulative WAR at season end wins</div>
-              <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>TX</span> {MAX_TX} transactions per week (buy or sell)</div>
+              <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>TX</span> {MAX_TX}/wk once season starts{isPreseason()?" (unlimited now)":""}</div>
             </div>
             :<>
             <div style={{display:"flex",justifyContent:"space-between",padding:"2px 4px",fontSize:12,color:lo}}>
@@ -664,16 +666,23 @@ return (
               <span>Left: <span style={{color:fg,fontWeight:700}}>{f$(me.budget)}</span></span>
             </div>
             <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}}>
-              <thead><tr>{["SL","PLAYER","$","PD","P/L","W",""].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
+              <colgroup>
+                <col style={{width:"12%"}}/>
+                <col style={{width:"36%"}}/>
+                <col style={{width:"18%"}}/>
+                <col style={{width:"18%"}}/>
+                <col style={{width:"10%"}}/>
+                <col style={{width:"6%"}}/>
+              </colgroup>
+              <thead><tr>{["SL","PLAYER","$","P/L","W",""].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
               <tbody>
                 {rE.map(({slot:s,p,paid})=>{
-                  if(!p)return<tr key={s}><td style={{...td2,color:brd}}>{dSlot(s)}</td><td colSpan={6} style={{...td2,color:brd}}>-- empty --</td></tr>;
+                  if(!p)return<tr key={s}><td style={{...td2,color:brd}}>{dSlot(s)}</td><td colSpan={5} style={{...td2,color:brd}}>-- empty --</td></tr>;
                   const pl2=p.c-paid;
                   return<tr key={s}>
                     <td style={{...td2,color:vlo,fontWeight:700}}>{dSlot(s)}</td>
-                    <td style={td2}>{p.nm}</td>
+                    <td style={{...td2,overflow:"hidden",textOverflow:"ellipsis"}}>{p.nm}</td>
                     <td style={{...td2,fontWeight:700}}>{f$(p.c)}</td>
-                    <td style={{...td2,color:lo}}>{f$(paid)}</td>
                     <td style={{...td2,fontWeight:700}}>{pl2>=0?"+":""}{f$(pl2)}</td>
                     <td style={td2}>{p.w.toFixed(1)}</td>
                     <td style={td2}><span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:13}}>✕</span></td>
@@ -775,12 +784,12 @@ return (
     {/* Mobile newspaper overlay — at viewport level, outside Palm container */}
     {showPaper&&<>
       <div onClick={()=>setShowPaper(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:100}}/>
-      <div style={{position:"fixed",left:"3%",top:"2%",width:"94%",height:"96%",zIndex:101,background:"#ddd5c3",borderRadius:2,boxShadow:"0 8px 40px rgba(0,0,0,0.7)",display:"flex",flexDirection:"column",fontFamily:"'Source Sans 3','Segoe UI',sans-serif",color:"#1a1a1a",overflow:"hidden"}}>
+      <div style={{position:"fixed",left:"3%",top:"max(2%, env(safe-area-inset-top))",width:"94%",bottom:"2%",zIndex:101,background:"#ddd5c3",borderRadius:2,boxShadow:"0 8px 40px rgba(0,0,0,0.7)",display:"flex",flexDirection:"column",fontFamily:"'Source Sans 3','Segoe UI',sans-serif",color:"#1a1a1a",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,backgroundImage:"url(/WAR-street/newsprint-texture.jpg)",backgroundSize:"cover",opacity:0.55,pointerEvents:"none",zIndex:0}}/>
         <div style={{position:"absolute",inset:0,background:"repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0px,transparent 1px,transparent 2px),repeating-linear-gradient(90deg,rgba(0,0,0,0.02) 0px,transparent 1px,transparent 3px)",pointerEvents:"none",zIndex:0}}/>
         <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",height:"100%"}}>
         <div style={{padding:"6px 10px 0",flexShrink:0,textAlign:"center",position:"relative"}}>
-          <div onClick={()=>setShowPaper(false)} style={{position:"absolute",right:6,top:4,cursor:"pointer",fontSize:24,color:"#444",fontFamily:"sans-serif",lineHeight:1,padding:"4px 8px",zIndex:2}}>✕</div>
+          <div onClick={()=>setShowPaper(false)} style={{position:"absolute",right:6,top:4,cursor:"pointer",fontSize:28,color:"#444",fontFamily:"sans-serif",lineHeight:1,padding:"8px 10px",zIndex:2}}>✕</div>
           <div style={{borderTop:"2px solid #000",borderBottom:"1px solid #000",height:3,marginBottom:3}}/>
           <div style={{fontFamily:"'Rojal','Georgia',serif",fontSize:28,fontWeight:400,letterSpacing:-0.5,margin:"2px 0",lineHeight:1.1}}>THE W<span style={{fontSize:"50%"}}>.</span>A<span style={{fontSize:"50%"}}>.</span>R<span style={{fontSize:"50%"}}>.</span> STREET JOURNAL</div>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",margin:"3px 0 4px",fontSize:8,color:"#444"}}>
@@ -1063,11 +1072,21 @@ return(
           <div style={{color:wh,marginBottom:4}}>Buy and sell MLB players like stocks. Prices move with on-field performance and demand.</div>
           <div style={{marginBottom:4}}><span style={{color:amb}}>BUDGET</span> <span style={{color:wh}}>${BUDGET/1e6}M to fill 13 roster slots</span></div>
           <div style={{marginBottom:4}}><span style={{color:amb}}>GOAL</span> <span style={{color:wh}}>Highest cumulative WAR at season end wins</span></div>
-          <div style={{marginBottom:4}}><span style={{color:amb}}>TX</span> <span style={{color:wh}}>{MAX_TX} transactions per week (buy or sell)</span></div>
+          <div style={{marginBottom:4}}><span style={{color:amb}}>TX</span> <span style={{color:wh}}>{MAX_TX}/wk once season starts{isPreseason()?" (unlimited now)":""}</span></div>
           <div style={{marginBottom:8}}><span style={{color:amb}}>Check the newspaper below the monitor for yesterday's box scores and standings.</span></div>
           <div><span onClick={()=>setVw("MKT")} style={{cursor:"pointer",color:bg,background:g,padding:"2px 12px",fontWeight:700}}>&gt; GO TO MARKET</span></div>
         </div>
-        :<table style={{width:"100%",borderCollapse:"collapse"}}>
+        :<table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}}>
+          <colgroup>
+            <col style={{width:"7%"}}/>
+            <col style={{width:"25%"}}/>
+            <col style={{width:"7%"}}/>
+            <col style={{width:"13%"}}/>
+            <col style={{width:"13%"}}/>
+            <col style={{width:"13%"}}/>
+            <col style={{width:"9%"}}/>
+            <col style={{width:"13%"}}/>
+          </colgroup>
           <thead><tr>{["SLOT","PLAYER","TM","PRICE","PAID","P/L","WAR",""].map((h,i)=><th key={h} style={th2_d}>{h}</th>)}</tr></thead>
           <tbody>
             {rE.map(({slot:s,p,paid})=>{
@@ -1075,7 +1094,7 @@ return(
               const pl2=p.c-paid;
               return(<tr key={s}>
                 <td style={{...td2_d,color:amb}}>{dSlot(s)}</td>
-                <td style={{...td2_d,color:wh}}>{p.nm}</td>
+                <td style={{...td2_d,color:wh,overflow:"hidden",textOverflow:"ellipsis"}}>{p.nm}</td>
                 <td style={{...td2_d,color:dim}}>{p.tm}</td>
                 <td style={{...td2_d,color:wh}}>{f$(p.c)}</td>
                 <td style={{...td2_d,color:dim}}>{f$(paid)}</td>

@@ -205,9 +205,11 @@ Use `pybaseball.playerid_lookup` for MLB ↔ FanGraphs cross-reference.
 
 ## Known Bugs
 
-- transaction limit of 6 makes it impossible to fill out a roster prior to opening day.  Lets suspend the transaction limits until opening day.
-- the portfolio page has player names running into their price.  Clean this up by shrinking position column and maybe remiving non-critical columns.
-- the version of the app that launches from a saved to homescreen icon is too far shifted upwards vertically. when opening the newspaper on mobile the masthead id overlaying the notch, and the X is unable to be pressed.
+None currently tracked. Previously fixed:
+
+- ~~Transaction limit of 6 made it impossible to fill a roster before opening day.~~ **Fixed:** Added `OPENING_DAY` constant (2026-03-26). Transaction limits suspended in both frontend and backend until that date. Help text shows "(unlimited now)" during preseason.
+- ~~Portfolio page had player names running into prices.~~ **Fixed:** Added explicit `<colgroup>` column widths to both mobile and desktop portfolio tables. Mobile: removed PAID column, added `text-overflow:ellipsis` on player names. Desktop: added `tableLayout:fixed` with percentage widths.
+- ~~PWA homescreen launch shifted content too far up; newspaper masthead overlaid notch; X button unreachable.~~ **Fixed:** Changed mobile containers from `alignItems:center` to `alignItems:flex-start` with `paddingTop:env(safe-area-inset-top)`. Newspaper overlay uses `top:max(2%, env(safe-area-inset-top))` instead of fixed `top:2%`. Close button enlarged (28px, bigger tap target).
 
 
 ## File Structure

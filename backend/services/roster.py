@@ -1,5 +1,6 @@
 """Buy/sell logic with slot validation, budget checks, and transaction limits."""
 
+from datetime import date
 from fastapi import HTTPException
 from db.client import get_supabase
 
@@ -7,6 +8,11 @@ HITTER_SLOTS = {"C", "1B", "2B", "3B", "SS", "OF1", "OF2", "OF3"}
 PITCHER_SLOTS = {"SP1", "SP2", "SP3", "SP4", "RP"}
 ALL_SLOTS = HITTER_SLOTS | PITCHER_SLOTS
 MAX_TX_PER_WEEK = 6
+OPENING_DAY = date(2026, 3, 26)
+
+
+def _is_preseason() -> bool:
+    return date.today() < OPENING_DAY
 
 
 def _validate_slot(slot: str, eligible: list[str]):
@@ -25,8 +31,8 @@ def buy_player(owner_id: int, player_id: int, slot: str) -> dict:
         raise HTTPException(404, "Owner not found")
     owner = owner.data
 
-    # Check transaction limit
-    if owner["transactions_this_week"] >= MAX_TX_PER_WEEK:
+    # Check transaction limit (suspended during preseason)
+    if not _is_preseason() and owner["transactions_this_week"] >= MAX_TX_PER_WEEK:
         raise HTTPException(400, f"Transaction limit reached ({MAX_TX_PER_WEEK}/week)")
 
     # Fetch player
@@ -93,8 +99,8 @@ def sell_player(owner_id: int, player_id: int, slot: str) -> dict:
         raise HTTPException(404, "Owner not found")
     owner = owner.data
 
-    # Check transaction limit
-    if owner["transactions_this_week"] >= MAX_TX_PER_WEEK:
+    # Check transaction limit (suspended during preseason)
+    if not _is_preseason() and owner["transactions_this_week"] >= MAX_TX_PER_WEEK:
         raise HTTPException(400, f"Transaction limit reached ({MAX_TX_PER_WEEK}/week)")
 
     # Verify roster entry exists
