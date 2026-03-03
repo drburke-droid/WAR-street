@@ -20,6 +20,7 @@ const f$=n=>Math.abs(n)>=1e6?`${(n/1e6).toFixed(1)}M`:Math.abs(n)>=1e3?`${(n/1e3
 function simChg(p,fr){const base=p.c-p.pp;const bp=+((base)/Math.max(p.pp,1)*100).toFixed(1);const sc={"1D":1,"1W":.6,"2W":.35,"1M":.18};return{raw:Math.round(base*(sc[fr]||1)),pct:+(bp*(sc[fr]||1)).toFixed(1)}}
 function oSlots(r,el){const f={};r.forEach(x=>{f[x.slot]=1});return el.filter(s=>!f[s])}
 function fits(r,pl){return oSlots(r,pl.el).length>0}
+function minFill(roster,allPlayers){const f={};roster.forEach(x=>{f[x.slot]=1});let cost=0,slots=0;SLOTS.forEach(s=>{if(f[s])return;slots++;const cheap=allPlayers.filter(p=>p.el.includes(s)).reduce((m,p)=>p.c<m?p.c:m,Infinity);if(cheap<Infinity)cost+=cheap});return{cost,slots}}
 
 
 // ── Inline Sparkline ──
@@ -277,6 +278,8 @@ const flash = useCallback((m,e) => { setMsg({m,e}); setTimeout(()=>setMsg(null),
 const buy = async (p,s) => {
 if(!isPreseason()&&me.tx>=MAX_TX) return flash("NO TX LEFT","E");
 if(p.c>rem) return flash("NO FUNDS","E");
+const mf=minFill([...me.r,{slot:s}],raw);
+if(rem-p.c<mf.cost) return flash(`NEED $${f$(mf.cost)} FOR ${mf.slots} SLOTS`,"E");
 if(!s) return flash("SELECT SLOT","E");
 try{
   const res=await authFetch(`${API}/transactions/buy`,{method:"POST",body:JSON.stringify({player_id:p.id,slot:s})});
@@ -745,6 +748,7 @@ return (
                   return<span key={ds} onClick={()=>ok&&setSl(openM[0])} style={{padding:"2px 6px",fontSize:13,border:`1px solid ${isSel?fg:ok?brd:"#ccc"}`,color:isSel?bgc:ok?fg:"#ccc",background:isSel?fg:"transparent",cursor:ok?"pointer":"default"}}>{ds}</span>})}
               </div>
               <div style={{fontSize:12,marginBottom:4}}><span style={{color:lo}}>Left: </span>{f$(rem)}<span style={{color:lo}}> After: </span>{f$(rem-sel.c)}</div>
+              {(()=>{const mf=minFill([...me.r,...(sl?[{slot:sl}]:[])],raw);return mf.slots>0?<div style={{fontSize:12,marginBottom:4,color:rem-sel.c<mf.cost?"#885555":lo}}>RESERVE: ${f$(mf.cost)} ({mf.slots} slots)</div>:null})()}
             </>}
             {ta==="S"&&sel.paid!=null&&<div style={{fontSize:12,marginBottom:4}}><span style={{color:lo}}>Paid: </span>{f$(sel.paid)}<span style={{color:lo}}> P/L: </span>{(()=>{const x=sel.c-sel.paid;return<span style={{color:x>=0?vlo:"#885555"}}>{x>=0?"+":""}{f$(x)}</span>})()}</div>}
             <div style={{display:"flex",gap:4}}>
@@ -1152,11 +1156,12 @@ return(
               const matching=sel.el.filter(s=>dSlot(s)===ds);const openM=oSlots(me.r,matching);const ok=openM.length>0;const isSel=sl&&dSlot(sl)===ds;
               return<span key={ds} onClick={()=>ok&&setSl(openM[0])} style={{padding:"3px 12px",cursor:ok?"pointer":"default",border:`1px solid ${isSel?g:ok?brd_d:"#1a1a1a"}`,color:isSel?bg:ok?g:"#2a2a2a",background:isSel?g:"transparent"}}>{ds}</span>})}
           </div>
-          <div style={{marginBottom:8,fontSize:18}}>
+          <div style={{marginBottom:4,fontSize:18}}>
             <span style={{color:dim}}>BUDGET </span>{f$(rem)}
             <span style={{color:dim,marginLeft:12}}>AFTER </span>
             <span style={{color:rem-sel.c>=0?g:neg}}>{f$(rem-sel.c)}</span>
           </div>
+          {(()=>{const mf=minFill([...me.r,...(sl?[{slot:sl}]:[])],raw);return mf.slots>0?<div style={{marginBottom:8,fontSize:16,color:rem-sel.c<mf.cost?neg:dim}}>RESERVE: ${f$(mf.cost)} ({mf.slots} slots)</div>:null})()}
         </>)}
         {ta==="S"&&sel.paid!=null&&(
           <div style={{marginBottom:8,fontSize:18}}>

@@ -15,6 +15,31 @@ def _is_preseason() -> bool:
     return date.today() < OPENING_DAY
 
 
+def _min_fill_cost(sb, owner_id: int, pending_slot: str) -> tuple[int, int]:
+    """Return (total_min_cost, empty_slot_count) to fill remaining empty slots."""
+    roster = sb.table("roster_entries").select("slot").eq("owner_id", owner_id).execute()
+    filled = {e["slot"] for e in (roster.data or [])}
+    filled.add(pending_slot)
+
+    total = 0
+    empty = 0
+    for slot in ALL_SLOTS:
+        if slot in filled:
+            continue
+        empty += 1
+        cheapest = (
+            sb.table("players")
+            .select("current_price")
+            .contains("eligible_positions", [slot])
+            .order("current_price")
+            .limit(1)
+            .execute()
+        )
+        if cheapest.data:
+            total += cheapest.data[0]["current_price"]
+    return total, empty
+
+
 def _validate_slot(slot: str, eligible: list[str]):
     if slot not in ALL_SLOTS:
         raise HTTPException(400, f"Invalid slot: {slot}")
@@ -60,6 +85,13 @@ def buy_player(owner_id: int, player_id: int, slot: str) -> dict:
     # Check budget
     if owner["budget_remaining"] < price:
         raise HTTPException(400, "Insufficient budget")
+
+    # Check roster budget guard — ensure remaining slots can still be filled
+    budget_after = owner["budget_remaining"] - price
+    min_fill, empty_count = _min_fill_cost(sb, owner_id, slot)
+    if budget_after < min_fill:
+        raise HTTPException(400,
+            f"Need ${min_fill:,} reserved for {empty_count} empty slot(s)")
 
     # Insert roster entry
     sb.table("roster_entries").insert({
