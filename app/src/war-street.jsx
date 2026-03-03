@@ -533,7 +533,7 @@ if (cur === null) {
   return (
     <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap'); @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important;touch-action:none} .palm-login input{caret-color:#2d4a2d}`}</style>
-      <div style={{position:"relative",width:"min(120vw, calc(100dvh * 768 / 1376))",height:"min(100dvh, calc(120vw * 1376 / 768))",touchAction:"none",marginTop:"-6vh"}}>
+      <div style={{position:"relative",width:"min(120vw, calc(100dvh * 768 / 1376))",height:"min(100dvh, calc(120vw * 1376 / 768))",touchAction:"none"}}>
         <div className="palm-login" style={{position:"absolute",left:"4.30%",top:"10.68%",width:"94.01%",height:"68.75%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1,touchAction:"none"}}>
           <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
           <div style={{position:"relative",zIndex:4,textAlign:"center",padding:"10px 16px",maxWidth:"90%"}}>
@@ -581,7 +581,6 @@ return (
       width: "min(120vw, calc(100dvh * 768 / 1376))",
       height: "min(100dvh, calc(120vw * 1376 / 768))",
       touchAction:"none",
-      marginTop:"-6vh",
     }}>
       {/* LCD Screen — positioned in the transparent cutout */}
       <div className="palm-screen" style={{
@@ -874,7 +873,7 @@ return (
     {/* Mobile newspaper overlay — at viewport level, outside Palm container */}
     {showPaper&&<>
       <div onClick={()=>setShowPaper(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:100}}/>
-      <div style={{position:"fixed",left:"3%",top:"calc(env(safe-area-inset-top) + 8px)",width:"94%",bottom:"calc(env(safe-area-inset-bottom) + 8px)",zIndex:101,background:"#ddd5c3",borderRadius:2,boxShadow:"0 8px 40px rgba(0,0,0,0.7)",display:"flex",flexDirection:"column",fontFamily:"'Source Sans 3','Segoe UI',sans-serif",color:"#1a1a1a",overflow:"hidden"}}>
+      <div style={{position:"fixed",left:"3%",top:"2%",width:"94%",bottom:"2%",zIndex:101,background:"#ddd5c3",borderRadius:2,boxShadow:"0 8px 40px rgba(0,0,0,0.7)",display:"flex",flexDirection:"column",fontFamily:"'Source Sans 3','Segoe UI',sans-serif",color:"#1a1a1a",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,backgroundImage:"url(/WAR-street/newsprint-texture.jpg)",backgroundSize:"cover",opacity:0.55,pointerEvents:"none",zIndex:0}}/>
         <div style={{position:"absolute",inset:0,background:"repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0px,transparent 1px,transparent 2px),repeating-linear-gradient(90deg,rgba(0,0,0,0.02) 0px,transparent 1px,transparent 3px)",pointerEvents:"none",zIndex:0}}/>
         <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",height:"100%"}}>
