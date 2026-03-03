@@ -817,31 +817,30 @@ return (
         </div>}
 
         {/* Modal */}
-        {sel&&<div onClick={()=>setSel(null)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.3)",zIndex:20,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        {sel&&(<div onClick={()=>setSel(null)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.3)",zIndex:20,display:"flex",alignItems:"center",justifyContent:"center"}}>
           <div onClick={e=>e.stopPropagation()} style={{background:hi,border:`2px solid ${fg}`,padding:"8px 10px",width:"85%",maxHeight:"80%",overflow:"auto"}}>
             <div style={{fontWeight:700,fontSize:15,marginBottom:3,color:vlo}}>{ta==="B"?"BUY":"SELL"}: {sel.nm}</div>
             <div style={{fontSize:12,color:lo,marginBottom:4}}>{sel.tm} | {[...new Set(sel.el.map(dSlot))].join("/")}</div>
             <div style={{fontSize:13,marginBottom:3}}><span style={{color:lo}}>$ </span><span style={{fontWeight:700}}>{f$(sel.c)}</span> <span style={{color:lo}}>W </span>{sel.w.toFixed(1)}</div>
-            {ta==="B"&&<>
+            {ta==="B"&&(<>
               <div style={{fontSize:12,color:lo,marginBottom:2}}>SLOT:</div>
               <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:4}}>
                 {[...new Set(sel.el.map(dSlot))].map(ds=>{
                   const matching=sel.el.filter(s=>dSlot(s)===ds);const openM=oSlots(me.r,matching);const ok=openM.length>0;const isSel=sl&&dSlot(sl)===ds;
-                  return<span key={ds} onClick={()=>ok&&setSl(openM[0])} style={{padding:"2px 6px",fontSize:13,border:`1px solid ${isSel?fg:ok?brd:"#ccc"}`,color:isSel?bgc:ok?fg:"#ccc",background:isSel?fg:"transparent",cursor:ok?"pointer":"default"}}>{ds}</span>})}
+                  return <span key={ds} onClick={()=>ok&&setSl(openM[0])} style={{padding:"2px 6px",fontSize:13,border:`1px solid ${isSel?fg:ok?brd:"#ccc"}`,color:isSel?bgc:ok?fg:"#ccc",background:isSel?fg:"transparent",cursor:ok?"pointer":"default"}}>{ds}</span>})}
               </div>
               <div style={{fontSize:12,marginBottom:4}}><span style={{color:lo}}>Left: </span>{f$(rem)}<span style={{color:lo}}> After: </span>{f$(rem-sel.c)}</div>
-              {(()=>{const mf=minFill([...me.r,...(sl?[{slot:sl}]:[])],raw);return mf.slots>0?<div style={{fontSize:12,marginBottom:4,color:rem-sel.c<mf.cost?"#885555":lo}}>RESERVE: ${f$(mf.cost)} ({mf.slots} slots)</div>:null})()}
+              {(()=>{const mf=minFill([...me.r,...(sl?[{slot:sl}]:[])],raw);return mf.slots>0 ? <div style={{fontSize:12,marginBottom:4,color:rem-sel.c<mf.cost?"#885555":lo}}>RESERVE: ${f$(mf.cost)} ({mf.slots} slots)</div> : null})()}
               {sl&&PSLOTS.includes(sl)&&!isPreseason()&&<div style={{fontSize:12,marginBottom:4,color:"#885555",fontWeight:700}}>LOCKED {P_HOLD} DAYS (pitcher)</div>}
-            </>}
-            {ta==="S"&&sel.paid!=null&&<div style={{fontSize:12,marginBottom:4}}><span style={{color:lo}}>Paid: </span>{f$(sel.paid)}<span style={{color:lo}}> P/L: </span>{(()=>{const x=sel.c-sel.paid;return<span style={{color:x>=0?vlo:"#885555"}}>{x>=0?"+":""}{f$(x)}</span>})()}</div>}
-            {ta==="S"&&(()=>{const hd=holdDays(sel.rSlot,sel.pat);return hd>0?<div style={{fontSize:12,marginBottom:4,color:"#885555"}}>HOLD: {hd}d remaining (pitcher)</div>:null})()}
-            {(()=>{const locked=ta==="S"&&holdDays(sel.rSlot,sel.pat)>0;return<div style={{display:"flex",gap:4}}>
+            </>)}
+            {ta==="S"&&sel.paid!=null&&(<div style={{fontSize:12,marginBottom:4}}><span style={{color:lo}}>Paid: </span>{f$(sel.paid)}<span style={{color:lo}}> P/L: </span>{(()=>{const x=sel.c-sel.paid;return <span style={{color:x>=0?vlo:"#885555"}}>{x>=0?"+":""}{f$(x)}</span>})()}</div>)}
+            {ta==="S"&&(()=>{const hd=holdDays(sel.rSlot,sel.pat);return hd>0 ? <div style={{fontSize:12,marginBottom:4,color:"#885555"}}>HOLD: {hd}d remaining (pitcher)</div> : null})()}
+            {(()=>{const locked=ta==="S"&&holdDays(sel.rSlot,sel.pat)>0;return (<div style={{display:"flex",gap:4}}>
               <span onClick={()=>setSel(null)} style={{cursor:"pointer",padding:"2px 8px",border:`1px solid ${brd}`,fontSize:13,color:lo}}>CANCEL</span>
               <span onClick={()=>!locked&&(ta==="B"?buy(sel,sl):sell(sel))} style={{cursor:(ta==="B"&&!sl)||locked?"default":"pointer",padding:"2px 8px",fontSize:13,fontWeight:700,border:`1px solid ${fg}`,color:bgc,background:ta==="B"?(sl?vlo:brd):locked?brd:"#885555",opacity:(ta==="B"&&!sl)||locked ? 0.4 : 1}}>{ta==="B"?`BUY > ${sl?dSlot(sl):"..."}`:locked?"LOCKED":"SELL"}</span>
-            </div>})()}
-            </div>
+            </div>)})()}
           </div>
-        </div>}
+        </div>)}
       </div>
 
       {/* Palm frame image overlay */}
