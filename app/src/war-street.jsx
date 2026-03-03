@@ -258,7 +258,7 @@ const doCreateTeam = async () => {
 // ── Derived State ──
 const pl = raw;
 const pM = useMemo(() => Object.fromEntries(pl.map(p => [p.id,p])), [pl]);
-const rE = SLOTS.map(s => { const e=me.r.find(x=>x.slot===s); return{slot:s,p:e?pM[e.pid]:null,paid:e?.paid||0}});
+const rE = SLOTS.map(s => { const e=me.r.find(x=>x.slot===s); return{slot:s,p:e?pM[e.pid]:null,paid:e?.paid||0,pat:e?.pat}});
 const filled = me.r.map(x => pM[x.pid]).filter(Boolean);
 const tW = me.tw ?? filled.reduce((s,p) => s+(p.w||0), 0);
 const pV = me.pv ?? filled.reduce((s,p) => s+(p.c||0), 0);
@@ -666,6 +666,7 @@ return (
               <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>BUDGET</span> ${BUDGET/1e6}M to fill 13 roster slots</div>
               <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>GOAL</span> Highest cumulative WAR at season end wins</div>
               <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>TX</span> {MAX_TX}/wk once season starts{isPreseason()?" (unlimited now)":""}</div>
+              <div style={{marginBottom:4}}><span style={{color:"#885555",fontWeight:700}}>HOLD</span> Pitchers locked {P_HOLD} days after purchase</div>
             </div>
             :<>
             <div style={{display:"flex",justifyContent:"space-between",padding:"2px 4px",fontSize:12,color:lo}}>
@@ -684,16 +685,16 @@ return (
               </colgroup>
               <thead><tr>{["SL","PLAYER","$","P/L","W",""].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
               <tbody>
-                {rE.map(({slot:s,p,paid})=>{
+                {rE.map(({slot:s,p,paid,pat})=>{
                   if(!p)return<tr key={s}><td style={{...td2,color:brd}}>{dSlot(s)}</td><td colSpan={5} style={{...td2,color:brd}}>-- empty --</td></tr>;
-                  const pl2=p.c-paid;
+                  const pl2=p.c-paid;const hd=holdDays(s,pat);
                   return<tr key={s}>
                     <td style={{...td2,color:vlo,fontWeight:700}}>{dSlot(s)}</td>
-                    <td style={{...td2,overflow:"hidden",textOverflow:"ellipsis"}}>{p.nm}</td>
+                    <td style={{...td2,overflow:"hidden",textOverflow:"ellipsis"}}>{p.nm}{hd>0?<span style={{color:"#885555",fontSize:10}}> {hd}d</span>:null}</td>
                     <td style={{...td2,fontWeight:700}}>{f$(p.c)}</td>
                     <td style={{...td2,fontWeight:700}}>{pl2>=0?"+":""}{f$(pl2)}</td>
                     <td style={td2}>{p.w.toFixed(1)}</td>
-                    <td style={td2}><span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:13}}>✕</span></td>
+                    <td style={td2}><span onClick={()=>openSell(p)} style={{cursor:"pointer",color:hd>0?brd:"#885555",fontSize:13}}>{hd>0?"◼":"✕"}</span></td>
                   </tr>})}
               </tbody>
             </table>
@@ -725,8 +726,8 @@ return (
           {/* HELP */}
           {vw==="?"&&<div style={{padding:"4px 6px",fontSize:13,lineHeight:1.6}}>
             <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:vlo}}>RULES</div>
-            {[["$",`$${BUDGET/1e6}M cap, 13 slots`],["POS","C 1B 2B 3B SS 3×OF 4×SP RP"],["OWN","Shared. Rosters hidden."],["WIN","Most cumulative WAR"],["TX",`${MAX_TX}/wk`],["Δ","Tap header: 1D/1W/2W/1M"]].map(([t,d],i)=>
-              <div key={i}><span style={{color:vlo,fontWeight:700}}>{t}</span> <span style={{color:fg}}>{d}</span></div>)}
+            {[["$",`$${BUDGET/1e6}M cap, 13 slots`],["POS","C 1B 2B 3B SS 3×OF 4×SP RP"],["OWN","Shared. Rosters hidden."],["WIN","Most cumulative WAR"],["TX",`${MAX_TX}/wk`],["HOLD",`Pitchers locked ${P_HOLD} days`],["Δ","Tap header: 1D/1W/2W/1M"]].map(([t,d],i)=>
+              <div key={i}><span style={{color:t==="HOLD"?"#885555":vlo,fontWeight:700}}>{t}</span> <span style={{color:fg}}>{d}</span></div>)}
           </div>}
         </div>
 
@@ -754,6 +755,7 @@ return (
               </div>
               <div style={{fontSize:12,marginBottom:4}}><span style={{color:lo}}>Left: </span>{f$(rem)}<span style={{color:lo}}> After: </span>{f$(rem-sel.c)}</div>
               {(()=>{const mf=minFill([...me.r,...(sl?[{slot:sl}]:[])],raw);return mf.slots>0?<div style={{fontSize:12,marginBottom:4,color:rem-sel.c<mf.cost?"#885555":lo}}>RESERVE: ${f$(mf.cost)} ({mf.slots} slots)</div>:null})()}
+              {sl&&PSLOTS.includes(sl)&&!isPreseason()&&<div style={{fontSize:12,marginBottom:4,color:"#885555",fontWeight:700}}>LOCKED {P_HOLD} DAYS (pitcher)</div>}
             </>}
             {ta==="S"&&sel.paid!=null&&<div style={{fontSize:12,marginBottom:4}}><span style={{color:lo}}>Paid: </span>{f$(sel.paid)}<span style={{color:lo}}> P/L: </span>{(()=>{const x=sel.c-sel.paid;return<span style={{color:x>=0?vlo:"#885555"}}>{x>=0?"+":""}{f$(x)}</span>})()}</div>}
             {ta==="S"&&(()=>{const hd=holdDays(sel.rSlot,sel.pat);return hd>0?<div style={{fontSize:12,marginBottom:4,color:"#885555"}}>HOLD: {hd}d remaining (pitcher)</div>:null})()}
@@ -1084,6 +1086,7 @@ return(
           <div style={{marginBottom:4}}><span style={{color:amb}}>BUDGET</span> <span style={{color:wh}}>${BUDGET/1e6}M to fill 13 roster slots</span></div>
           <div style={{marginBottom:4}}><span style={{color:amb}}>GOAL</span> <span style={{color:wh}}>Highest cumulative WAR at season end wins</span></div>
           <div style={{marginBottom:4}}><span style={{color:amb}}>TX</span> <span style={{color:wh}}>{MAX_TX}/wk once season starts{isPreseason()?" (unlimited now)":""}</span></div>
+          <div style={{marginBottom:4}}><span style={{color:neg}}>HOLD</span> <span style={{color:wh}}>Pitchers locked {P_HOLD} days after purchase</span></div>
           <div style={{marginBottom:8}}><span style={{color:amb}}>Check the newspaper below the monitor for yesterday's box scores and standings.</span></div>
           <div><span onClick={()=>setVw("MKT")} style={{cursor:"pointer",color:bg,background:g,padding:"2px 12px",fontWeight:700}}>&gt; GO TO MARKET</span></div>
         </div>
@@ -1100,18 +1103,18 @@ return(
           </colgroup>
           <thead><tr>{["SLOT","PLAYER","TM","PRICE","PAID","P/L","WAR",""].map((h,i)=><th key={h} style={th2_d}>{h}</th>)}</tr></thead>
           <tbody>
-            {rE.map(({slot:s,p,paid})=>{
+            {rE.map(({slot:s,p,paid,pat})=>{
               if(!p)return(<tr key={s}><td style={{...td2_d,color:"#2a2a2a"}}>{dSlot(s)}</td><td colSpan={7} style={{...td2_d,color:"#1a1a1a"}}>-- empty --</td></tr>);
-              const pl2=p.c-paid;
+              const pl2=p.c-paid;const hd=holdDays(s,pat);
               return(<tr key={s}>
                 <td style={{...td2_d,color:amb}}>{dSlot(s)}</td>
-                <td style={{...td2_d,color:wh,overflow:"hidden",textOverflow:"ellipsis"}}>{p.nm}</td>
+                <td style={{...td2_d,color:wh,overflow:"hidden",textOverflow:"ellipsis"}}>{p.nm}{hd>0?<span style={{color:neg,fontSize:12}}> {hd}d</span>:null}</td>
                 <td style={{...td2_d,color:dim}}>{p.tm}</td>
                 <td style={{...td2_d,color:wh}}>{f$(p.c)}</td>
                 <td style={{...td2_d,color:dim}}>{f$(paid)}</td>
                 <td style={{...td2_d,color:pl2>=0?g:neg}}>{pl2>=0?"+":""}{f$(pl2)}</td>
                 <td style={td2_d}>{p.w.toFixed(1)}</td>
-                <td style={td2_d}><span onClick={()=>openSell(p)} style={{cursor:"pointer",background:neg,color:bg,padding:"1px 8px",fontWeight:700,fontSize:14}}>SELL</span></td>
+                <td style={td2_d}>{hd>0?<span style={{color:dim,fontSize:12}}>{hd}d</span>:<span onClick={()=>openSell(p)} style={{cursor:"pointer",background:neg,color:bg,padding:"1px 8px",fontWeight:700,fontSize:14}}>SELL</span>}</td>
               </tr>)})}
           </tbody>
         </table>}
@@ -1137,8 +1140,8 @@ return(
       {/* HELP */}
       {vw==="HELP"&&(<div style={{maxWidth:580}}>
         <div style={{color:amb,marginBottom:8,fontSize:28}}>RULES</div>
-        {[["BUDGET",`$${(BUDGET/1e6)}M. Fill 13 roster slots.`],["ROSTER","C 1B 2B 3B SS OF OF OF SP SP SP SP RP"],["ELIG","Players fill only qualified positions."],["OWNERSHIP","Shared. Multiple owners can hold same player."],["SCORING","Cumulative WAR. Highest total wins."],["PRICE","Projection/actual blend + momentum + hidden demand."],["CHG","Click column header to cycle: 1D / 1W / 2W / 1M"],["TX",`${MAX_TX} per week. Buy or sell = 1 tx.`],["PRIVACY","Rosters hidden. Standings show WAR + value only."]].map(([t,d],i)=>(
-          <div key={i} style={{marginBottom:5}}><span style={{color:amb}}>{t}</span><span style={{color:dim}}> -- {d}</span></div>))}
+        {[["BUDGET",`$${(BUDGET/1e6)}M. Fill 13 roster slots.`],["ROSTER","C 1B 2B 3B SS OF OF OF SP SP SP SP RP"],["ELIG","Players fill only qualified positions."],["OWNERSHIP","Shared. Multiple owners can hold same player."],["SCORING","Cumulative WAR. Highest total wins."],["PRICE","Projection/actual blend + momentum + hidden demand."],["CHG","Click column header to cycle: 1D / 1W / 2W / 1M"],["TX",`${MAX_TX} per week. Buy or sell = 1 tx.`],["HOLD",`Pitchers locked ${P_HOLD} days after purchase. No day-trading arms.`],["PRIVACY","Rosters hidden. Standings show WAR + value only."]].map(([t,d],i)=>(
+          <div key={i} style={{marginBottom:5}}><span style={{color:t==="HOLD"?neg:amb}}>{t}</span><span style={{color:dim}}> -- {d}</span></div>))}
       </div>)}
     </div>
 
@@ -1169,6 +1172,7 @@ return(
             <span style={{color:rem-sel.c>=0?g:neg}}>{f$(rem-sel.c)}</span>
           </div>
           {(()=>{const mf=minFill([...me.r,...(sl?[{slot:sl}]:[])],raw);return mf.slots>0?<div style={{marginBottom:8,fontSize:16,color:rem-sel.c<mf.cost?neg:dim}}>RESERVE: ${f$(mf.cost)} ({mf.slots} slots)</div>:null})()}
+          {sl&&PSLOTS.includes(sl)&&!isPreseason()&&<div style={{marginBottom:8,fontSize:16,color:neg,fontWeight:700}}>LOCKED {P_HOLD} DAYS (pitcher)</div>}
         </>)}
         {ta==="S"&&sel.paid!=null&&(
           <div style={{marginBottom:8,fontSize:18}}>
