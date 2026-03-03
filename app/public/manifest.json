@@ -1,0 +1,31 @@
+{
+  "name": "WAR STREET — Fantasy Baseball Stock Market",
+  "short_name": "WAR STREET",
+  "description": "Fantasy baseball stock market. Buy and sell MLB players like stocks.",
+  "start_url": "/WAR-street/",
+  "scope": "/WAR-street/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
