@@ -345,7 +345,7 @@ setSel({...p,paid:me.r.find(x=>x.pid===p.id)?.paid});setTa("S");
 //  LOGIN SCREEN (cur === null)
 // ═══════════════════════════════════════════════════════════
 if (cur === null) {
-  const loginInputStyle = {background:"transparent",border:"none",borderBottom:"1px solid currentColor",color:"inherit",fontFamily:"inherit",fontSize:"inherit",padding:"2px 4px",width:"60%",outline:"none",caretColor:"currentColor"};
+  const loginInputStyle = {background:"transparent",border:"none",borderBottom:"1px solid currentColor",color:"inherit",fontFamily:"inherit",fontSize:"inherit",padding:"2px 4px",flex:1,minWidth:0,outline:"none",caretColor:"currentColor"};
   const clearLoginFields = () => { setLoginEmail(""); setLoginPassword(""); setTeamName(""); setLoginError(null); setRegStep(1); setFirstName(""); setLastName(""); setSelectedCity(""); };
 
   const loginMenu = (phase, setPhase) => {
