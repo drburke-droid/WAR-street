@@ -142,8 +142,13 @@ const [menu, setMenu] = useState(false);
 const frames = ["1D","1W","2W","1M"];
 const sparkFrames = ["1W","1M","SZN"];
 
-const [me, setMe] = useState({ id:null, nm:"...", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
+const [me, setMe] = useState({ id:null, nm:"...", fn:"", ln:"", em:"", ca:"", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
 const [lb, setLb] = useState([]);
+const [pwCur, setPwCur] = useState("");
+const [pwNew, setPwNew] = useState("");
+const [pwConfirm, setPwConfirm] = useState("");
+const [pwMsg, setPwMsg] = useState(null);
+const [pwLoading, setPwLoading] = useState(false);
 const [showPaper, setShowPaper] = useState(false);
 const [boxData, setBoxData] = useState(null);
 const [boxLoading, setBoxLoading] = useState(false);
@@ -184,6 +189,7 @@ authFetch(`${API}/owners/${cur}`).then(r=>{
   if(!r.ok){if(r.status===404){setCur(null)}throw new Error("not found")}return r.json()
 }).then(data=>setMe({
   id:data.id, nm:data.name,
+  fn:data.first_name||"", ln:data.last_name||"", em:data.email||"", ca:data.created_at||"",
   r:data.roster.map(e=>({pid:e.player_id,slot:e.slot,paid:e.purchase_price,pat:e.purchased_at})),
   tx:data.transactions_this_week, budget:data.budget_remaining,
   pv:data.portfolio_value, tw:data.total_war
@@ -228,9 +234,29 @@ const doLogout = useCallback(() => {
   setCur(null); setToken(null); setLoginPhase("boot"); setTypedText(""); setLogoOpacity(0);
   setTeamName(""); setLoginEmail(""); setLoginPassword(""); setLoginError(null); setMenu(false);
   setRegStep(1); setFirstName(""); setLastName(""); setSelectedCity("");
-  setMe({ id:null, nm:"...", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
+  setMe({ id:null, nm:"...", fn:"", ln:"", em:"", ca:"", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
   setRaw([]);
 }, []);
+
+const doChangePassword = async () => {
+  setPwMsg(null);
+  if (!pwCur || !pwNew) { setPwMsg({t:"Current and new password required",e:true}); return; }
+  if (pwNew.length < 6) { setPwMsg({t:"New password must be at least 6 characters",e:true}); return; }
+  if (pwNew !== pwConfirm) { setPwMsg({t:"New passwords do not match",e:true}); return; }
+  setPwLoading(true);
+  try {
+    const res = await authFetch(`${API}/auth/change-password`, { method:"POST", body:JSON.stringify({ current_password:pwCur, new_password:pwNew }) });
+    if (res.status===401) { setPwMsg({t:"Current password is incorrect",e:true}); setPwLoading(false); return; }
+    if (!res.ok) { const err = await res.json(); setPwMsg({t:err.detail||"Failed",e:true}); setPwLoading(false); return; }
+    setPwMsg({t:"Password changed successfully",e:false}); setPwCur(""); setPwNew(""); setPwConfirm("");
+  } catch(e) { setPwMsg({t:"Network error",e:true}); }
+  setPwLoading(false);
+};
+
+// Clear password fields when navigating away from settings
+useEffect(() => {
+  if (vw !== "SET" && vw !== "SETTINGS") { setPwCur(""); setPwNew(""); setPwConfirm(""); setPwMsg(null); }
+}, [vw]);
 
 const doLogin = async () => {
   if (!loginEmail.trim() || !loginPassword) return;
@@ -383,6 +409,7 @@ if (cur === null) {
           <span onClick={doLogin} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>[LOGIN]</span>
           <span onClick={()=>{setLoginPhase("menu");clearLoginFields()}} style={{cursor:"pointer",opacity:0.6}} onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0.6}>[BACK]</span>
         </div>
+        <div style={{marginTop:8,opacity:0.5,fontSize:"inherit"}}>Forgot password? Contact league admin.</div>
       </div>
     );
     if (phase === "create") {
@@ -506,7 +533,7 @@ if (cur === null) {
   return (
     <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:0,paddingTop:"env(safe-area-inset-top)",overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap'); @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important;touch-action:none} .palm-login input{caret-color:#2d4a2d}`}</style>
-      <div style={{position:"relative",width:"min(120vw, calc(120vh * 768 / 1376))",height:"min(120vh, calc(120vw * 1376 / 768))",touchAction:"none"}}>
+      <div style={{position:"relative",width:"min(120vw, calc(120vh * 768 / 1376))",height:"min(120vh, calc(120vw * 1376 / 768))",touchAction:"none",marginTop:"-8vh"}}>
         <div className="palm-login" style={{position:"absolute",left:"4.30%",top:"10.68%",width:"94.01%",height:"68.75%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1,touchAction:"none"}}>
           <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
           <div style={{position:"relative",zIndex:4,textAlign:"center",padding:"10px 16px",maxWidth:"90%"}}>
@@ -554,6 +581,7 @@ return (
       width: "min(120vw, calc(120vh * 768 / 1376))",
       height: "min(120vh, calc(120vw * 1376 / 768))",
       touchAction:"none",
+      marginTop:"-8vh",
     }}>
       {/* LCD Screen — positioned in the transparent cutout */}
       <div className="palm-screen" style={{
@@ -589,8 +617,8 @@ return (
           <div onClick={()=>setMenu(false)} style={{position:"absolute",inset:0,zIndex:14}}/>
           <div style={{position:"absolute",top:22,left:2,background:hi,border:`1px solid ${fg}`,zIndex:15,width:"70%",maxHeight:"80%",overflow:"auto"}} className="palm-screen">
             <div style={{padding:"3px 6px",fontSize:13,color:vlo,borderBottom:`1px solid ${brd}`,fontWeight:700}}>MENU</div>
-            {["Profile","Settings"].map((l,i)=>
-              <div key={i} onClick={()=>setMenu(false)} style={{padding:"4px 6px",fontSize:13,color:fg,cursor:"pointer"}}
+            {[["Profile",()=>setVw("PRO")],["Settings",()=>setVw("SET")]].map(([l,fn],i)=>
+              <div key={i} onClick={()=>{fn();setMenu(false)}} style={{padding:"4px 6px",fontSize:13,color:fg,cursor:"pointer"}}
                 onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{l}</div>)}
             <div onClick={()=>{doLogout();setMenu(false)}} style={{padding:"4px 6px",fontSize:13,color:"#885555",cursor:"pointer"}}
               onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Log Out</div>
@@ -728,6 +756,55 @@ return (
             <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:vlo}}>RULES</div>
             {[["$",`$${BUDGET/1e6}M cap, 13 slots`],["POS","C 1B 2B 3B SS 3×OF 4×SP RP"],["OWN","Shared. Rosters hidden."],["WIN","Most cumulative WAR"],["TX",`${MAX_TX}/wk`],["HOLD",`Pitchers locked ${P_HOLD} days`],["Δ","Tap header: 1D/1W/2W/1M"]].map(([t,d],i)=>
               <div key={i}><span style={{color:t==="HOLD"?"#885555":vlo,fontWeight:700}}>{t}</span> <span style={{color:fg}}>{d}</span></div>)}
+          </div>}
+
+          {/* PROFILE */}
+          {vw==="PRO"&&<div style={{padding:"4px 6px",fontSize:13,lineHeight:1.8}}>
+            <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:vlo}}>PROFILE</div>
+            <div><span style={{color:lo}}>TEAM </span><span style={{fontWeight:700}}>{me.nm}</span></div>
+            <div><span style={{color:lo}}>NAME </span>{me.fn} {me.ln}</div>
+            <div><span style={{color:lo}}>EMAIL </span>{me.em}</div>
+            <div><span style={{color:lo}}>MEMBER SINCE </span>{me.ca?new Date(me.ca).toLocaleDateString():"-"}</div>
+            <div style={{borderTop:`1px solid ${brd}`,marginTop:4,paddingTop:4}}>
+              <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:vlo}}>SEASON STATS</div>
+              <div><span style={{color:lo}}>WAR </span><span style={{fontWeight:700}}>{tW.toFixed(1)}</span></div>
+              <div><span style={{color:lo}}>VALUE </span><span style={{fontWeight:700}}>{f$(pV)}</span></div>
+              <div><span style={{color:lo}}>BUDGET </span>{f$(rem)}</div>
+              <div><span style={{color:lo}}>SPENT </span>{f$(sp)}</div>
+              <div><span style={{color:lo}}>P/L </span><span style={{color:pV-sp>=0?vlo:"#885555"}}>{pV-sp>=0?"+":""}{f$(pV-sp)}</span></div>
+              <div><span style={{color:lo}}>ROSTER </span>{me.r.length}/13</div>
+              <div><span style={{color:lo}}>TX LEFT </span>{MAX_TX-me.tx}/{MAX_TX}</div>
+            </div>
+          </div>}
+
+          {/* SETTINGS */}
+          {vw==="SET"&&<div style={{padding:"4px 6px",fontSize:13,lineHeight:1.8}}>
+            <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:vlo}}>SETTINGS</div>
+            <div style={{marginBottom:2,color:lo}}>CHANGE PASSWORD</div>
+            <div style={{marginBottom:4}}>{"──────────────────────"}</div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+              <span style={{color:lo,minWidth:48}}>CUR:</span>
+              <input value={pwCur} onChange={e=>setPwCur(e.target.value)} type="password"
+                style={{background:"transparent",border:`1px solid ${brd}`,color:fg,fontFamily:"inherit",fontSize:12,padding:"2px 4px",flex:1,minWidth:0}}/>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+              <span style={{color:lo,minWidth:48}}>NEW:</span>
+              <input value={pwNew} onChange={e=>setPwNew(e.target.value)} type="password"
+                style={{background:"transparent",border:`1px solid ${brd}`,color:fg,fontFamily:"inherit",fontSize:12,padding:"2px 4px",flex:1,minWidth:0}}/>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+              <span style={{color:lo,minWidth:48}}>CFM:</span>
+              <input value={pwConfirm} onChange={e=>setPwConfirm(e.target.value)} type="password"
+                onKeyDown={e=>{if(e.key==="Enter")doChangePassword()}}
+                style={{background:"transparent",border:`1px solid ${brd}`,color:fg,fontFamily:"inherit",fontSize:12,padding:"2px 4px",flex:1,minWidth:0}}/>
+            </div>
+            {pwMsg&&<div style={{color:pwMsg.e?"#885555":vlo,marginBottom:4,fontSize:12}}>{pwMsg.t}</div>}
+            <div style={{display:"flex",gap:8,marginBottom:8}}>
+              <span onClick={pwLoading?undefined:doChangePassword} style={{cursor:pwLoading?"default":"pointer",padding:"2px 8px",border:`1px solid ${fg}`,color:bgc,background:vlo,opacity:pwLoading?0.5:1}}>{pwLoading?"...":"SAVE"}</span>
+            </div>
+            <div style={{borderTop:`1px solid ${brd}`,paddingTop:6}}>
+              <span onClick={doLogout} style={{cursor:"pointer",color:"#885555",fontWeight:700}}>LOG OUT</span>
+            </div>
           </div>}
         </div>
 
@@ -988,7 +1065,7 @@ return(
             <div onClick={()=>setMenu(false)} style={{position:"fixed",inset:0,zIndex:80}}/>
             <div style={{position:"absolute",top:"100%",left:0,marginTop:4,background:bg,border:`1px solid ${brd_d}`,zIndex:81,minWidth:220}}>
               <div style={{padding:"6px 14px",color:amb,borderBottom:`1px solid ${brd_d}`,fontSize:14}}>{me.nm}</div>
-              {[["Profile Info",()=>{}],["Settings",()=>{}]].map(([label,fn],i)=>(
+              {[["Profile Info",()=>setVw("PROF")],["Settings",()=>setVw("SETTINGS")]].map(([label,fn],i)=>(
                 <div key={i} onClick={()=>{fn();setMenu(false)}} style={{padding:"8px 14px",cursor:"pointer",color:wh,fontSize:16}} onMouseEnter={e=>e.currentTarget.style.background="#111"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{label}</div>))}
               <div onClick={()=>{doLogout();setMenu(false)}} style={{padding:"8px 14px",cursor:"pointer",color:neg,fontSize:16}} onMouseEnter={e=>e.currentTarget.style.background="#111"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Log Out</div>
             </div>
@@ -1142,6 +1219,58 @@ return(
         <div style={{color:amb,marginBottom:8,fontSize:28}}>RULES</div>
         {[["BUDGET",`$${(BUDGET/1e6)}M. Fill 13 roster slots.`],["ROSTER","C 1B 2B 3B SS OF OF OF SP SP SP SP RP"],["ELIG","Players fill only qualified positions."],["OWNERSHIP","Shared. Multiple owners can hold same player."],["SCORING","Cumulative WAR. Highest total wins."],["PRICE","Projection/actual blend + momentum + hidden demand."],["CHG","Click column header to cycle: 1D / 1W / 2W / 1M"],["TX",`${MAX_TX} per week. Buy or sell = 1 tx.`],["HOLD",`Pitchers locked ${P_HOLD} days after purchase. No day-trading arms.`],["PRIVACY","Rosters hidden. Standings show WAR + value only."]].map(([t,d],i)=>(
           <div key={i} style={{marginBottom:5}}><span style={{color:t==="HOLD"?neg:amb}}>{t}</span><span style={{color:dim}}> -- {d}</span></div>))}
+      </div>)}
+
+      {/* PROFILE */}
+      {vw==="PROF"&&(<div style={{maxWidth:580}}>
+        <div style={{color:amb,marginBottom:8,fontSize:28}}>PROFILE</div>
+        <div style={{lineHeight:2.2,fontSize:18}}>
+          <div><span style={{color:dim}}>TEAM </span><span style={{color:wh,fontWeight:700}}>{me.nm}</span></div>
+          <div><span style={{color:dim}}>NAME </span><span style={{color:wh}}>{me.fn} {me.ln}</span></div>
+          <div><span style={{color:dim}}>EMAIL </span><span style={{color:wh}}>{me.em}</span></div>
+          <div><span style={{color:dim}}>MEMBER SINCE </span><span style={{color:wh}}>{me.ca?new Date(me.ca).toLocaleDateString():"-"}</span></div>
+        </div>
+        <div style={{borderTop:`1px solid ${brd_d}`,marginTop:10,paddingTop:10}}>
+          <div style={{color:amb,marginBottom:6,fontSize:22}}>SEASON STATS</div>
+          <div style={{lineHeight:2.2,fontSize:18}}>
+            <div><span style={{color:dim}}>TOTAL WAR </span><span style={{color:g,fontWeight:700}}>{tW.toFixed(1)}</span></div>
+            <div><span style={{color:dim}}>PORTFOLIO VALUE </span><span style={{color:g,fontWeight:700}}>{f$(pV)}</span></div>
+            <div><span style={{color:dim}}>BUDGET </span><span style={{color:amb}}>{f$(rem)}</span></div>
+            <div><span style={{color:dim}}>SPENT </span><span style={{color:wh}}>{f$(sp)}</span></div>
+            <div><span style={{color:dim}}>P/L </span><span style={{color:pV-sp>=0?g:neg}}>{pV-sp>=0?"+":""}{f$(pV-sp)}</span></div>
+            <div><span style={{color:dim}}>ROSTER </span>{me.r.length}/13</div>
+            <div><span style={{color:dim}}>TX LEFT </span><span style={{color:me.tx>=MAX_TX?neg:g}}>{MAX_TX-me.tx}</span>/{MAX_TX}</div>
+          </div>
+        </div>
+      </div>)}
+
+      {/* SETTINGS */}
+      {vw==="SETTINGS"&&(<div style={{maxWidth:480}}>
+        <div style={{color:amb,marginBottom:8,fontSize:28}}>SETTINGS</div>
+        <div style={{color:dim,marginBottom:6,fontSize:18}}>CHANGE PASSWORD</div>
+        <div style={{marginBottom:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+            <span style={{color:dim,minWidth:100,fontSize:16}}>CURRENT</span>
+            <input value={pwCur} onChange={e=>setPwCur(e.target.value)} type="password"
+              style={{background:"transparent",border:`1px solid ${brd_d}`,color:g,fontFamily:"inherit",fontSize:16,padding:"4px 8px",flex:1}}/>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+            <span style={{color:dim,minWidth:100,fontSize:16}}>NEW</span>
+            <input value={pwNew} onChange={e=>setPwNew(e.target.value)} type="password"
+              style={{background:"transparent",border:`1px solid ${brd_d}`,color:g,fontFamily:"inherit",fontSize:16,padding:"4px 8px",flex:1}}/>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+            <span style={{color:dim,minWidth:100,fontSize:16}}>CONFIRM</span>
+            <input value={pwConfirm} onChange={e=>setPwConfirm(e.target.value)} type="password"
+              onKeyDown={e=>{if(e.key==="Enter")doChangePassword()}}
+              style={{background:"transparent",border:`1px solid ${brd_d}`,color:g,fontFamily:"inherit",fontSize:16,padding:"4px 8px",flex:1}}/>
+          </div>
+          {pwMsg&&<div style={{color:pwMsg.e?neg:g,marginBottom:6,fontSize:16}}>{pwMsg.t}</div>}
+          <span onClick={pwLoading?undefined:doChangePassword} style={{cursor:pwLoading?"default":"pointer",color:bg,fontWeight:700,padding:"4px 16px",background:pwLoading?"#333":g,fontSize:16}}>{pwLoading?"...":"SAVE PASSWORD"}</span>
+        </div>
+        <div style={{borderTop:`1px solid ${brd_d}`,marginTop:16,paddingTop:12}}>
+          <span onClick={doLogout} style={{cursor:"pointer",color:neg,fontWeight:700,fontSize:18}}>LOG OUT</span>
+        </div>
       </div>)}
     </div>
 

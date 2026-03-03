@@ -1,11 +1,11 @@
-"""Auth routes: register and login."""
+"""Auth routes: register, login, change password."""
 
 import re
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from auth import hash_password, verify_password, create_token
+from auth import get_current_owner, hash_password, verify_password, create_token
 from db.client import get_supabase
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -110,6 +110,28 @@ def register(body: RegisterBody):
     owner = result.data[0]
     token = create_token(owner["id"])
     return {"token": token, "owner_id": owner["id"], "team_name": owner["name"]}
+
+
+class ChangePasswordBody(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.post("/change-password")
+def change_password(body: ChangePasswordBody, owner_id: int = Depends(get_current_owner)):
+    if len(body.new_password) < 6:
+        raise HTTPException(400, "New password must be at least 6 characters")
+
+    sb = get_supabase()
+    result = sb.table("owners").select("password_hash").eq("id", owner_id).single().execute()
+    if not result.data:
+        raise HTTPException(404, "Owner not found")
+
+    if not verify_password(body.current_password, result.data["password_hash"]):
+        raise HTTPException(401, "Current password is incorrect")
+
+    sb.table("owners").update({"password_hash": hash_password(body.new_password)}).eq("id", owner_id).execute()
+    return {"message": "Password changed successfully"}
 
 
 @router.post("/login")
