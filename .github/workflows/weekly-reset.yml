@@ -1,0 +1,17 @@
+name: Weekly Transaction Reset
+
+on:
+  schedule:
+    # Every Monday at 5:00 AM UTC (midnight ET)
+    - cron: '0 5 * * 1'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reset weekly transactions
+        run: |
+          curl -s -X POST \
+            https://war-street-production.up.railway.app/admin/reset-transactions \
+            -H "x-admin-key: ${{ secrets.JWT_SECRET }}"

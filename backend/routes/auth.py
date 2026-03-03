@@ -96,12 +96,14 @@ def register(body: RegisterBody):
         raise HTTPException(409, "Team name already taken")
 
     # Create new team
+    STARTING_BUDGET = 300_000_000
     result = sb.table("owners").insert({
         "name": body.team_name.strip(),
         "email": email,
         "password_hash": hash_password(body.password),
         "first_name": body.first_name.strip(),
         "last_name": body.last_name.strip(),
+        "budget_remaining": STARTING_BUDGET,
     }).execute()
     if not result.data:
         raise HTTPException(400, "Could not create team")
