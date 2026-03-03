@@ -196,7 +196,7 @@ fetch(`${API}/leaderboard`).then(r=>r.json()).then(data=>setLb(data.map(e=>({
 useEffect(() => { refreshLb() }, [refreshLb]);
 
 // ── Login Animation Effects ──
-const WELCOME_MSG = `WAR STREET v1.0\n(C) 2026 Bureau of Baseball Securities\n\nInitializing market data feed...... OK\nLoading player valuations........... OK\nConnecting to trading floor......... OK\n\nREADY.`;
+const WELCOME_MSG = `WAR STREET v1.0\n(C) 2026 Burke Industries\n\nInitializing market data feed...... OK\nLoading player valuations........... OK\nConnecting to trading floor......... OK\n\nREADY.`;
 
 useEffect(() => {
   if (cur !== null || loginPhase !== "boot") return;
@@ -343,7 +343,7 @@ setSel({...p,paid:me.r.find(x=>x.pid===p.id)?.paid});setTa("S");
 //  LOGIN SCREEN (cur === null)
 // ═══════════════════════════════════════════════════════════
 if (cur === null) {
-  const loginInputStyle = {background:"transparent",border:"none",borderBottom:"1px solid currentColor",color:"inherit",fontFamily:"inherit",fontSize:"inherit",padding:"2px 4px",width:"60%",outline:"none"};
+  const loginInputStyle = {background:"transparent",border:"none",borderBottom:"1px solid currentColor",color:"inherit",fontFamily:"inherit",fontSize:"inherit",padding:"2px 4px",width:"60%",outline:"none",caretColor:"currentColor"};
   const clearLoginFields = () => { setLoginEmail(""); setLoginPassword(""); setTeamName(""); setLoginError(null); setRegStep(1); setFirstName(""); setLastName(""); setSelectedCity(""); };
 
   const loginMenu = (phase, setPhase) => {
@@ -469,17 +469,17 @@ if (cur === null) {
   // ── Desktop Login ──
   if (!isMobile) return (
     <div style={{background:"#2a2520",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&display=swap'); @import url('https://fonts.cdnfonts.com/css/perfect-dos-vga-437'); *{box-sizing:border-box} @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} .crt-login .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-login .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&display=swap'); @import url('https://fonts.cdnfonts.com/css/perfect-dos-vga-437'); *{box-sizing:border-box} @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} .crt-login input{caret-color:#33ff33} .crt-login .crt::before{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:1000} .crt-login .crt::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,0.4) 100%);pointer-events:none;z-index:999}`}</style>
       <div style={{position:"relative",width:"min(100vw, calc(100vh * 1080 / 608))",height:"min(100vh, calc(100vw * 608 / 1080))"}}>
         <div className="crt-login" style={{position:"absolute",left:"28.70%",top:"2.80%",width:"46.67%",height:"68.26%",borderRadius:6,background:"#0a0a0a",overflow:"hidden",zIndex:1}}>
           <div style={{width:"100%",height:"100%",overflow:"auto",display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
             <div className="crt" style={{position:"absolute",inset:0,pointerEvents:"none"}}/>
-            <div style={{position:"relative",zIndex:1001,textAlign:"center",padding:"20px 30px",maxWidth:420}}>
-              <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:48,color:"#ff9900",letterSpacing:"3px",opacity:logoOpacity,transition:"none",textShadow:"0 0 20px rgba(255,153,0,0.3)"}}>WAR STREET</div>
+            <div style={{position:"relative",zIndex:1001,textAlign:"center",padding:"20px 30px",width:"100%",maxWidth:600}}>
+              <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:48,color:"#ff9900",letterSpacing:"8px",opacity:logoOpacity,transition:"none",textShadow:"0 0 20px rgba(255,153,0,0.3)",transform:"scaleX(1.4)",transformOrigin:"center"}}>WAR STREET</div>
               <div style={{fontFamily:"'Perfect DOS VGA 437',monospace",fontSize:16,color:"#555",marginTop:4,letterSpacing:"2px",opacity:logoOpacity}}>FANTASY BASEBALL STOCK MARKET</div>
               {loginPhase !== "boot" && (
                 <div style={{fontFamily:"'Perfect DOS VGA 437',monospace",fontSize:20,color:"#33ff33",textAlign:"left",marginTop:20,lineHeight:1.4}}>
-                  <pre style={{margin:0,fontFamily:"inherit",whiteSpace:"pre-wrap"}}>{typedText}<span style={{animation:"blink 1s step-end infinite"}}>█</span></pre>
+                  <pre style={{margin:0,fontFamily:"inherit",whiteSpace:"pre-wrap"}}>{typedText}{(loginPhase==="typing"||loginPhase==="menu")&&<span style={{animation:"blink 1s step-end infinite"}}>█</span>}</pre>
                   {loginMenu(loginPhase, setLoginPhase)}
                 </div>
               )}
@@ -495,16 +495,16 @@ if (cur === null) {
   const fg_m="#2d4a2d",bgc_m="#b8c8a0",brd_m="#8a9a72",lo_m="#7a8a62",vlo_m="#5a6a42";
   return (
     <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap'); @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important;touch-action:none}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap'); @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important;touch-action:none} .palm-login input{caret-color:#2d4a2d}`}</style>
       <div style={{position:"relative",width:"min(120vw, calc(120vh * 768 / 1376))",height:"min(120vh, calc(120vw * 1376 / 768))",touchAction:"none"}}>
-        <div style={{position:"absolute",left:"4.30%",top:"10.68%",width:"94.01%",height:"68.75%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1,touchAction:"none"}}>
+        <div className="palm-login" style={{position:"absolute",left:"4.30%",top:"10.68%",width:"94.01%",height:"68.75%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1,touchAction:"none"}}>
           <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
           <div style={{position:"relative",zIndex:4,textAlign:"center",padding:"10px 16px",maxWidth:"90%"}}>
             <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:23,color:vlo_m,letterSpacing:"2px",opacity:logoOpacity}}>WAR STREET</div>
             <div style={{fontSize:10,color:lo_m,marginTop:3,opacity:logoOpacity}}>FANTASY BASEBALL STOCK MARKET</div>
             {loginPhase !== "boot" && (
               <div style={{fontSize:12,color:fg_m,textAlign:"left",marginTop:12,lineHeight:1.5}}>
-                <pre style={{margin:0,fontFamily:"inherit",whiteSpace:"pre-wrap",fontSize:12}}>{typedText}<span style={{animation:"blink 1s step-end infinite"}}>█</span></pre>
+                <pre style={{margin:0,fontFamily:"inherit",whiteSpace:"pre-wrap",fontSize:12}}>{typedText}{(loginPhase==="typing"||loginPhase==="menu")&&<span style={{animation:"blink 1s step-end infinite"}}>█</span>}</pre>
                 {loginMenu(loginPhase, setLoginPhase)}
               </div>
             )}
@@ -522,8 +522,8 @@ if (cur === null) {
 if (isMobile) {
 const fg="#2d4a2d",bgc="#b8c8a0",bg2="#a8b890",brd="#8a9a72",hi="#c8d8b0",lo="#7a8a62",vlo="#5a6a42";
 const pad={padding:"3px 4px",whiteSpace:"nowrap"};
-const th2={...pad,color:lo,textAlign:"left",borderBottom:`1px solid ${brd}`,position:"sticky",top:0,background:bgc,fontSize:11,zIndex:2};
-const td2={...pad,borderBottom:`1px solid ${brd}`,fontSize:12};
+const th2={...pad,color:lo,textAlign:"left",borderBottom:`1px solid ${brd}`,position:"sticky",top:0,background:bgc,fontSize:13,zIndex:2};
+const td2={...pad,borderBottom:`1px solid ${brd}`,fontSize:14};
 
 return (
   <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
@@ -563,39 +563,39 @@ return (
         <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
 
         {/* Flash */}
-        {msg&&<div style={{position:"absolute",top:0,left:0,right:0,padding:"2px 4px",background:msg.e==="E"?"#c85555":vlo,color:bgc,fontSize:8,zIndex:20,textAlign:"center"}}>{msg.m}</div>}
+        {msg&&<div style={{position:"absolute",top:0,left:0,right:0,padding:"2px 4px",background:msg.e==="E"?"#c85555":vlo,color:bgc,fontSize:11,zIndex:20,textAlign:"center"}}>{msg.m}</div>}
 
         {/* Header — overflowX hidden on all mobile content */}
         <div style={{padding:"3px 6px",borderBottom:`1px solid ${brd}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",gap:4}}>
-            <span onClick={()=>setMenu(m=>!m)} style={{cursor:"pointer",fontSize:14,color:lo,lineHeight:1}}>☰</span>
-            <span style={{fontFamily:"'JetBrains Mono'",fontWeight:800,fontSize:13,color:vlo,letterSpacing:1}}>WAR ST.</span>
+            <span onClick={()=>setMenu(m=>!m)} style={{cursor:"pointer",fontSize:16,color:lo,lineHeight:1}}>☰</span>
+            <span style={{fontFamily:"'JetBrains Mono'",fontWeight:800,fontSize:15,color:vlo,letterSpacing:1}}>WAR ST.</span>
           </div>
-          <span style={{fontSize:10,color:lo}}>GM{GP} '26</span>
+          <span style={{fontSize:12,color:lo}}>GM{GP} '26</span>
         </div>
 
         {/* Menu dropdown */}
         {menu&&<>
           <div onClick={()=>setMenu(false)} style={{position:"absolute",inset:0,zIndex:14}}/>
           <div style={{position:"absolute",top:22,left:2,background:hi,border:`1px solid ${fg}`,zIndex:15,width:"70%",maxHeight:"80%",overflow:"auto"}} className="palm-screen">
-            <div style={{padding:"3px 6px",fontSize:11,color:vlo,borderBottom:`1px solid ${brd}`,fontWeight:700}}>MENU</div>
+            <div style={{padding:"3px 6px",fontSize:13,color:vlo,borderBottom:`1px solid ${brd}`,fontWeight:700}}>MENU</div>
             {["Profile","Settings"].map((l,i)=>
-              <div key={i} onClick={()=>setMenu(false)} style={{padding:"4px 6px",fontSize:11,color:fg,cursor:"pointer"}}
+              <div key={i} onClick={()=>setMenu(false)} style={{padding:"4px 6px",fontSize:13,color:fg,cursor:"pointer"}}
                 onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{l}</div>)}
-            <div onClick={()=>{doLogout();setMenu(false)}} style={{padding:"4px 6px",fontSize:11,color:"#885555",cursor:"pointer"}}
+            <div onClick={()=>{doLogout();setMenu(false)}} style={{padding:"4px 6px",fontSize:13,color:"#885555",cursor:"pointer"}}
               onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Log Out</div>
           </div>
         </>}
 
         {/* Status */}
-        <div style={{padding:"2px 6px",borderBottom:`1px solid ${brd}`,fontSize:10,color:lo,display:"flex",gap:6,alignItems:"center",flexShrink:0,flexWrap:"wrap"}}>
+        <div style={{padding:"2px 6px",borderBottom:`1px solid ${brd}`,fontSize:12,color:lo,display:"flex",gap:6,alignItems:"center",flexShrink:0,flexWrap:"wrap"}}>
           <span>${f$(rem)}</span>
           <span>W:{tW.toFixed(1)}</span>
           <span>TX:{MAX_TX-me.tx}</span>
           <span>{me.r.length}/13</span>
           <div style={{marginLeft:"auto",display:"flex",gap:2}}>
             {["MKT","PORT","RNK","?"].map(v=>
-              <span key={v} onClick={()=>setVw(v)} style={{cursor:"pointer",padding:"1px 5px",fontSize:10,color:vw===v?bgc:lo,background:vw===v?vlo:"transparent",borderRadius:1}}>{v}</span>)}
+              <span key={v} onClick={()=>setVw(v)} style={{cursor:"pointer",padding:"1px 5px",fontSize:12,color:vw===v?bgc:lo,background:vw===v?vlo:"transparent",borderRadius:1}}>{v}</span>)}
           </div>
         </div>
 
@@ -603,7 +603,7 @@ return (
         <div ref={palmScrollRef} className="palm-screen palm-scroll" style={{flex:1,overflowY:"auto",overflowX:"hidden",overscrollBehavior:"contain",padding:"1px 0"}}>
           {/* MARKET */}
           {vw==="MKT"&&<div>
-            <div style={{display:"flex",gap:3,padding:"2px 4px",alignItems:"center",fontSize:10,flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:3,padding:"2px 4px",alignItems:"center",fontSize:12,flexWrap:"wrap"}}>
               {["ALL","HIT","PIT"].map(v=>
                 <span key={v} onClick={()=>setFt(v)} style={{cursor:"pointer",color:ft===v?bgc:lo,background:ft===v?vlo:"transparent",padding:"1px 4px",borderRadius:1}}>{v}</span>)}
               <span style={{color:brd}}>|</span>
@@ -630,15 +630,15 @@ return (
                   return(
                     <tr key={p.id} style={{background:mine?hi:"transparent"}}>
                       <td style={{...td2,color:mine?vlo:fg,fontWeight:mine?700:400,overflow:"hidden",textOverflow:"ellipsis"}}>{p.nm}</td>
-                      <td style={{...td2,color:lo,fontSize:10}}>{p.tm}</td>
-                      <td style={{...td2,fontSize:9}} title={allPos.join("/")}>{pos}</td>
+                      <td style={{...td2,color:lo,fontSize:12}}>{p.tm}</td>
+                      <td style={{...td2,fontSize:11}} title={allPos.join("/")}>{pos}</td>
                       <td style={{...td2,fontWeight:700}}>{f$(p.c)}</td>
                       <td style={td2}>{ch.pct>=0?"+":""}{ch.pct}%</td>
                       <td style={td2}>{p.w.toFixed(1)}</td>
                       <td style={{...td2,textAlign:"center"}}>
-                        {mine?<span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:11,fontWeight:700}}>SELL</span>
-                        :ok?<span onClick={()=>openBuy(p)} style={{cursor:"pointer",color:vlo,fontSize:11,fontWeight:700}}>BUY</span>
-                        :<span style={{color:brd,fontSize:10}}>--</span>}
+                        {mine?<span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:13,fontWeight:700}}>SELL</span>
+                        :ok?<span onClick={()=>openBuy(p)} style={{cursor:"pointer",color:vlo,fontSize:13,fontWeight:700}}>BUY</span>
+                        :<span style={{color:brd,fontSize:12}}>--</span>}
                       </td>
                     </tr>);
                 })}
@@ -648,9 +648,9 @@ return (
 
           {/* PORTFOLIO */}
           {vw==="PORT"&&<div style={{padding:"0 2px",overflowX:"hidden"}}>
-            <div style={{fontSize:10,color:lo,padding:"2px 4px"}}>{me.nm}</div>
-            {me.r.length===0?<div style={{padding:"6px 6px",fontSize:10,lineHeight:1.6,color:fg}}>
-              <div style={{fontWeight:700,fontSize:11,color:vlo,marginBottom:4}}>WELCOME TO WAR STREET</div>
+            <div style={{fontSize:12,color:lo,padding:"2px 4px"}}>{me.nm}</div>
+            {me.r.length===0?<div style={{padding:"6px 6px",fontSize:12,lineHeight:1.6,color:fg}}>
+              <div style={{fontWeight:700,fontSize:13,color:vlo,marginBottom:4}}>WELCOME TO WAR STREET</div>
               <div style={{marginBottom:4}}>You manage a fantasy baseball team. Buy and sell MLB players like stocks — their prices move with on-field performance and demand.</div>
               <div style={{marginBottom:6,color:vlo,fontWeight:700,cursor:"pointer"}} onClick={()=>setVw("MKT")}>{"> GO TO MARKET TO BUY PLAYERS"}</div>
               <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>BUDGET</span> ${BUDGET/1e6}M to fill 13 roster slots</div>
@@ -658,7 +658,7 @@ return (
               <div style={{marginBottom:4}}><span style={{color:vlo,fontWeight:700}}>TX</span> {MAX_TX} transactions per week (buy or sell)</div>
             </div>
             :<>
-            <div style={{display:"flex",justifyContent:"space-between",padding:"2px 4px",fontSize:10,color:lo}}>
+            <div style={{display:"flex",justifyContent:"space-between",padding:"2px 4px",fontSize:12,color:lo}}>
               <span>WAR: <span style={{color:fg,fontWeight:700}}>{me.tw.toFixed(1)}</span></span>
               <span>Val: <span style={{color:fg,fontWeight:700}}>{f$(me.pv)}</span></span>
               <span>Left: <span style={{color:fg,fontWeight:700}}>{f$(me.budget)}</span></span>
@@ -667,16 +667,16 @@ return (
               <thead><tr>{["SL","PLAYER","$","PD","P/L","W",""].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
               <tbody>
                 {rE.map(({slot:s,p,paid})=>{
-                  if(!p)return<tr key={s}><td style={{...td2,color:brd,fontSize:11}}>{dSlot(s)}</td><td colSpan={6} style={{...td2,color:brd,fontSize:10}}>-- empty --</td></tr>;
+                  if(!p)return<tr key={s}><td style={{...td2,color:brd}}>{dSlot(s)}</td><td colSpan={6} style={{...td2,color:brd}}>-- empty --</td></tr>;
                   const pl2=p.c-paid;
                   return<tr key={s}>
-                    <td style={{...td2,color:vlo,fontWeight:700,fontSize:11}}>{dSlot(s)}</td>
-                    <td style={{...td2,fontSize:11}}>{p.nm}</td>
+                    <td style={{...td2,color:vlo,fontWeight:700}}>{dSlot(s)}</td>
+                    <td style={td2}>{p.nm}</td>
                     <td style={{...td2,fontWeight:700}}>{f$(p.c)}</td>
-                    <td style={{...td2,color:lo,fontSize:10}}>{f$(paid)}</td>
+                    <td style={{...td2,color:lo}}>{f$(paid)}</td>
                     <td style={{...td2,fontWeight:700}}>{pl2>=0?"+":""}{f$(pl2)}</td>
                     <td style={td2}>{p.w.toFixed(1)}</td>
-                    <td style={td2}><span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:11}}>✕</span></td>
+                    <td style={td2}><span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:13}}>✕</span></td>
                   </tr>})}
               </tbody>
             </table>
@@ -685,24 +685,29 @@ return (
 
           {/* STANDINGS */}
           {vw==="RNK"&&<div style={{padding:"0 2px",overflowX:"hidden"}}>
-            <div style={{fontSize:10,color:lo,padding:"2px 4px"}}>STANDINGS</div>
+            <div style={{fontSize:12,color:lo,padding:"2px 4px"}}>STANDINGS</div>
             <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}}>
-              <thead><tr>{["#","TEAM","WAR","VAL"].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
+              <thead><tr>
+                <th style={{...th2,width:"8%"}}>#</th>
+                <th style={{...th2,width:"50%"}}>TEAM</th>
+                <th style={{...th2,width:"20%"}}>WAR</th>
+                <th style={{...th2,width:"22%"}}>VAL</th>
+              </tr></thead>
               <tbody>
                 {lb.map((o,i)=><tr key={o.id} style={{background:o.id===cur?hi:"transparent"}}>
                   <td style={{...td2,color:i<3?vlo:lo,fontWeight:i<3?700:400}}>{i+1}</td>
-                  <td style={{...td2,fontWeight:o.id===cur?700:400,fontSize:11}}>{o.nm}{o.id===cur?" ◄":""}</td>
+                  <td style={{...td2,fontWeight:o.id===cur?700:400,overflow:"hidden",textOverflow:"ellipsis"}}>{o.nm}{o.id===cur?" ◄":""}</td>
                   <td style={{...td2,fontWeight:700}}>{o.w.toFixed(1)}</td>
-                  <td style={{...td2,color:lo,fontSize:11}}>{f$(o.v)}</td>
+                  <td style={{...td2,color:lo}}>{f$(o.v)}</td>
                 </tr>)}
               </tbody>
             </table>
-            <div style={{fontSize:10,color:brd,padding:"2px 4px"}}>Rosters hidden.</div>
+            <div style={{fontSize:12,color:brd,padding:"2px 4px"}}>Rosters hidden.</div>
           </div>}
 
           {/* HELP */}
-          {vw==="?"&&<div style={{padding:"4px 6px",fontSize:11,lineHeight:1.6}}>
-            <div style={{fontWeight:700,fontSize:12,marginBottom:3,color:vlo}}>RULES</div>
+          {vw==="?"&&<div style={{padding:"4px 6px",fontSize:13,lineHeight:1.6}}>
+            <div style={{fontWeight:700,fontSize:14,marginBottom:3,color:vlo}}>RULES</div>
             {[["$",`$${BUDGET/1e6}M cap, 13 slots`],["POS","C 1B 2B 3B SS 3×OF 4×SP RP"],["OWN","Shared. Rosters hidden."],["WIN","Most cumulative WAR"],["TX",`${MAX_TX}/wk`],["Δ","Tap header: 1D/1W/2W/1M"]].map(([t,d],i)=>
               <div key={i}><span style={{color:vlo,fontWeight:700}}>{t}</span> <span style={{color:fg}}>{d}</span></div>)}
           </div>}
@@ -720,22 +725,22 @@ return (
         {/* Modal */}
         {sel&&<div onClick={()=>setSel(null)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.3)",zIndex:20,display:"flex",alignItems:"center",justifyContent:"center"}}>
           <div onClick={e=>e.stopPropagation()} style={{background:hi,border:`2px solid ${fg}`,padding:"8px 10px",width:"85%",maxHeight:"80%",overflow:"auto"}}>
-            <div style={{fontWeight:700,fontSize:13,marginBottom:3,color:vlo}}>{ta==="B"?"BUY":"SELL"}: {sel.nm}</div>
-            <div style={{fontSize:10,color:lo,marginBottom:4}}>{sel.tm} | {[...new Set(sel.el.map(dSlot))].join("/")}</div>
-            <div style={{fontSize:11,marginBottom:3}}><span style={{color:lo}}>$ </span><span style={{fontWeight:700}}>{f$(sel.c)}</span> <span style={{color:lo}}>W </span>{sel.w.toFixed(1)}</div>
+            <div style={{fontWeight:700,fontSize:15,marginBottom:3,color:vlo}}>{ta==="B"?"BUY":"SELL"}: {sel.nm}</div>
+            <div style={{fontSize:12,color:lo,marginBottom:4}}>{sel.tm} | {[...new Set(sel.el.map(dSlot))].join("/")}</div>
+            <div style={{fontSize:13,marginBottom:3}}><span style={{color:lo}}>$ </span><span style={{fontWeight:700}}>{f$(sel.c)}</span> <span style={{color:lo}}>W </span>{sel.w.toFixed(1)}</div>
             {ta==="B"&&<>
-              <div style={{fontSize:10,color:lo,marginBottom:2}}>SLOT:</div>
+              <div style={{fontSize:12,color:lo,marginBottom:2}}>SLOT:</div>
               <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:4}}>
                 {[...new Set(sel.el.map(dSlot))].map(ds=>{
                   const matching=sel.el.filter(s=>dSlot(s)===ds);const openM=oSlots(me.r,matching);const ok=openM.length>0;const isSel=sl&&dSlot(sl)===ds;
-                  return<span key={ds} onClick={()=>ok&&setSl(openM[0])} style={{padding:"2px 6px",fontSize:11,border:`1px solid ${isSel?fg:ok?brd:"#ccc"}`,color:isSel?bgc:ok?fg:"#ccc",background:isSel?fg:"transparent",cursor:ok?"pointer":"default"}}>{ds}</span>})}
+                  return<span key={ds} onClick={()=>ok&&setSl(openM[0])} style={{padding:"2px 6px",fontSize:13,border:`1px solid ${isSel?fg:ok?brd:"#ccc"}`,color:isSel?bgc:ok?fg:"#ccc",background:isSel?fg:"transparent",cursor:ok?"pointer":"default"}}>{ds}</span>})}
               </div>
-              <div style={{fontSize:10,marginBottom:4}}><span style={{color:lo}}>Left: </span>{f$(rem)}<span style={{color:lo}}> After: </span>{f$(rem-sel.c)}</div>
+              <div style={{fontSize:12,marginBottom:4}}><span style={{color:lo}}>Left: </span>{f$(rem)}<span style={{color:lo}}> After: </span>{f$(rem-sel.c)}</div>
             </>}
-            {ta==="S"&&sel.paid!=null&&<div style={{fontSize:10,marginBottom:4}}><span style={{color:lo}}>Paid: </span>{f$(sel.paid)}<span style={{color:lo}}> P/L: </span>{(()=>{const x=sel.c-sel.paid;return<span style={{color:x>=0?vlo:"#885555"}}>{x>=0?"+":""}{f$(x)}</span>})()}</div>}
+            {ta==="S"&&sel.paid!=null&&<div style={{fontSize:12,marginBottom:4}}><span style={{color:lo}}>Paid: </span>{f$(sel.paid)}<span style={{color:lo}}> P/L: </span>{(()=>{const x=sel.c-sel.paid;return<span style={{color:x>=0?vlo:"#885555"}}>{x>=0?"+":""}{f$(x)}</span>})()}</div>}
             <div style={{display:"flex",gap:4}}>
-              <span onClick={()=>setSel(null)} style={{cursor:"pointer",padding:"2px 8px",border:`1px solid ${brd}`,fontSize:11,color:lo}}>CANCEL</span>
-              <span onClick={()=>ta==="B"?buy(sel,sl):sell(sel)} style={{cursor:(ta==="B"&&!sl)?"default":"pointer",padding:"2px 8px",fontSize:11,fontWeight:700,border:`1px solid ${fg}`,color:bgc,background:ta==="B"?(sl?vlo:brd):"#885555",opacity:(ta==="B"&&!sl) ? 0.4 : 1}}>{ta==="B"?`BUY > ${sl?dSlot(sl):"..."}`:"SELL"}</span>
+              <span onClick={()=>setSel(null)} style={{cursor:"pointer",padding:"2px 8px",border:`1px solid ${brd}`,fontSize:13,color:lo}}>CANCEL</span>
+              <span onClick={()=>ta==="B"?buy(sel,sl):sell(sel)} style={{cursor:(ta==="B"&&!sl)?"default":"pointer",padding:"2px 8px",fontSize:13,fontWeight:700,border:`1px solid ${fg}`,color:bgc,background:ta==="B"?(sl?vlo:brd):"#885555",opacity:(ta==="B"&&!sl) ? 0.4 : 1}}>{ta==="B"?`BUY > ${sl?dSlot(sl):"..."}`:"SELL"}</span>
             </div>
           </div>
         </div>}
@@ -1108,7 +1113,7 @@ return(
     </div>
 
     {/* Modal */}
-    {sel&&(<div onClick={()=>setSel(null)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.7)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"}}>
+    {sel&&(<div onClick={()=>setSel(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:bg,border:`1px solid ${g}`,padding:"20px 28px",minWidth:320}}>
         <div style={{color:amb,fontSize:26,marginBottom:6}}>{ta==="B"?"BUY":"SELL"}</div>
         <div style={{color:wh,fontSize:26,marginBottom:2}}>{sel.nm}</div>

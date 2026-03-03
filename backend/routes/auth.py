@@ -12,6 +12,37 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+# Profanity word list — matched as whole words, case-insensitive
+_BAD_WORDS = {
+    "ass", "asses", "asshole", "assholes",
+    "bastard", "bastards", "bitch", "bitches",
+    "blowjob", "bollock", "bollocks", "boner",
+    "boob", "boobs", "bugger", "butt", "buttplug",
+    "clitoris", "cock", "cocks", "coon", "crap",
+    "cunt", "cunts", "damn", "dick", "dicks",
+    "dildo", "dyke", "fag", "fags", "faggot",
+    "fellate", "fellatio", "flange",
+    "fuck", "fucked", "fucker", "fuckers", "fucking", "fucks",
+    "goddamn", "godsdamn", "handjob",
+    "hell", "homo", "horny", "jerk", "jizz",
+    "knobend", "labia",
+    "muff", "negro", "nigga", "nigger", "niggers",
+    "nob", "penis", "piss", "poop",
+    "prick", "pube", "pussy", "queer",
+    "scrotum", "sex", "shit", "shits", "shitty",
+    "skank", "slut", "sluts", "smegma",
+    "spunk", "tit", "tits", "tosser", "turd",
+    "twat", "vagina", "wank", "wanker", "whore", "whores",
+}
+_BAD_RE = re.compile(
+    r"\b(" + "|".join(re.escape(w) for w in sorted(_BAD_WORDS, key=len, reverse=True)) + r")\b",
+    re.IGNORECASE,
+)
+
+
+def _has_profanity(text: str) -> bool:
+    return bool(_BAD_RE.search(text))
+
 
 class RegisterBody(BaseModel):
     email: str
@@ -39,6 +70,14 @@ def register(body: RegisterBody):
         raise HTTPException(400, "Last name is required")
     if not body.team_name.strip():
         raise HTTPException(400, "Team name is required")
+
+    for field, label in [
+        (body.first_name, "First name"),
+        (body.last_name, "Last name"),
+        (body.team_name, "Team name"),
+    ]:
+        if _has_profanity(field):
+            raise HTTPException(400, f"{label} contains inappropriate language")
 
     sb = get_supabase()
 
