@@ -10,6 +10,13 @@ jobs:
   pipeline:
     runs-on: ubuntu-latest
     steps:
+      - name: Populate player IDs (skips if already set)
+        run: |
+          curl -v -X POST \
+            https://war-street-production.up.railway.app/admin/pipeline/populate-ids \
+            -H "x-admin-key: ${{ secrets.JWT_SECRET }}" \
+            --max-time 300
+
       - name: Pull WAR from FanGraphs
         run: |
           curl -v -X POST \
