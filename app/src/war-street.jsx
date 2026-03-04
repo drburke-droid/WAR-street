@@ -153,6 +153,7 @@ const [showPaper, setShowPaper] = useState(false);
 const [boxData, setBoxData] = useState(null);
 const [boxLoading, setBoxLoading] = useState(false);
 const [leaders, setLeaders] = useState(null);
+const [guest, setGuest] = useState(false);
 
 // ── localStorage sync ──
 useEffect(() => {
@@ -172,7 +173,7 @@ const authFetch = useCallback((url, opts = {}) => {
 
 // ── API Fetches ──
 useEffect(() => {
-if (!cur) return;
+if (!cur && !guest) return;
 fetch(`${API}/players`).then(r=>r.json()).then(data=>setRaw(data.map(p=>({
   id:p.id, nm:p.name, tm:p.team, ps:p.position, tp:p.player_type,
   el:p.eligible_positions, pj:p.projected_war, w:p.war_ytd, gp:p.games_played,
@@ -180,7 +181,7 @@ fetch(`${API}/players`).then(r=>r.json()).then(data=>setRaw(data.map(p=>({
   vol:p.volume??0, opp:p.opponent??"", tbk:p.tb_k??null,
   prH:p.price_history??[], wH:p.war_history??[]
 })))).catch(()=>{});
-}, [cur]);
+}, [cur, guest]);
 
 const refreshOwner = useCallback(() => {
 if (!cur || !token) return;
@@ -210,7 +211,7 @@ useEffect(() => { refreshLb() }, [refreshLb]);
 const WELCOME_MSG = `WAR STREET v1.0\n(C) 2026 Burke Industries\n\nInitializing market data feed...... OK\nLoading player valuations........... OK\nConnecting to trading floor......... OK\n\nREADY.`;
 
 useEffect(() => {
-  if (cur !== null || loginPhase !== "boot") return;
+  if (cur !== null || guest || loginPhase !== "boot") return;
   const steps = [0, 0.08, 0.15, 0.25, 0.4, 0.6, 0.8, 1.0];
   const timers = steps.map((op, i) => setTimeout(() => {
     setLogoOpacity(op);
@@ -220,7 +221,7 @@ useEffect(() => {
 }, [cur, loginPhase]);
 
 useEffect(() => {
-  if (cur !== null || loginPhase !== "typing") return;
+  if (cur !== null || guest || loginPhase !== "typing") return;
   let i = 0;
   const iv = setInterval(() => {
     i++;
@@ -236,6 +237,13 @@ const doLogout = useCallback(() => {
   setRegStep(1); setFirstName(""); setLastName(""); setSelectedCity("");
   setMe({ id:null, nm:"...", fn:"", ln:"", em:"", ca:"", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
   setRaw([]);
+}, []);
+
+const exitGuest = useCallback(() => {
+  setGuest(false); setRaw([]); setLoginPhase("menu");
+  setShowPaper(false); setMenu(false); setSel(null);
+  setMe({ id:null, nm:"...", fn:"", ln:"", em:"", ca:"", r:[], tx:0, budget:BUDGET, pv:0, tw:0 });
+  setVw("MKT");
 }, []);
 
 const doChangePassword = async () => {
@@ -257,6 +265,11 @@ const doChangePassword = async () => {
 useEffect(() => {
   if (vw !== "SET" && vw !== "SETTINGS") { setPwCur(""); setPwNew(""); setPwConfirm(""); setPwMsg(null); }
 }, [vw]);
+
+// Redirect guests away from protected views
+useEffect(() => {
+  if (guest && (vw === "PRO" || vw === "SET" || vw === "PROF" || vw === "SETTINGS")) setVw("MKT");
+}, [guest, vw]);
 
 const doLogin = async () => {
   if (!loginEmail.trim() || !loginPassword) return;
@@ -309,6 +322,11 @@ if(p.c>rem) return flash("NO FUNDS","E");
 const mf=minFill([...me.r,{slot:s}],raw);
 if(rem-p.c<mf.cost) return flash(`NEED $${f$(mf.cost)} FOR ${mf.slots} SLOTS`,"E");
 if(!s) return flash("SELECT SLOT","E");
+if(guest){
+  setMe(prev=>({...prev,r:[...prev.r,{pid:p.id,slot:s,paid:p.c,pat:new Date().toISOString()}],budget:prev.budget-p.c,tx:prev.tx+1,pv:prev.pv+p.c,tw:prev.tw+(p.w||0)}));
+  flash(`BUY ${p.nm} > ${dSlot(s)} — nothing saved without an account`);
+  setSel(null); return;
+}
 try{
   const res=await authFetch(`${API}/transactions/buy`,{method:"POST",body:JSON.stringify({player_id:p.id,slot:s})});
   if(res.status===401){doLogout();return flash("SESSION EXPIRED","E")}
@@ -324,6 +342,12 @@ if(!isPreseason()&&me.tx>=MAX_TX) return flash("NO TX LEFT","E");
 const e=me.r.find(x=>x.pid===p.id);
 const hd=holdDays(e?.slot,e?.pat);
 if(hd>0) return flash(`HOLD ${hd}D (pitcher)`,"E");
+if(guest){
+  const pl2=p.c-(e?.paid||0);
+  setMe(prev=>({...prev,r:prev.r.filter(x=>x.pid!==p.id),budget:prev.budget+p.c,tx:prev.tx+1,pv:prev.pv-p.c,tw:prev.tw-(p.w||0)}));
+  flash(`SELL ${p.nm} @ ${f$(p.c)} [${pl2>=0?"+":""}${f$(pl2)}] — create an account to keep your team`);
+  setSel(null); return;
+}
 try{
   const res=await authFetch(`${API}/transactions/sell`,{method:"POST",body:JSON.stringify({player_id:p.id,slot:e?.slot})});
   if(res.status===401){doLogout();return flash("SESSION EXPIRED","E")}
@@ -378,7 +402,7 @@ setSel({...p,paid:e?.paid,pat:e?.pat,rSlot:e?.slot});setTa("S");
 // ═══════════════════════════════════════════════════════════
 //  LOGIN SCREEN (cur === null)
 // ═══════════════════════════════════════════════════════════
-if (cur === null) {
+if (cur === null && !guest) {
   const loginInputStyle = {background:"transparent",border:"none",borderBottom:"1px solid currentColor",color:"inherit",fontFamily:"inherit",fontSize:"inherit",padding:"2px 4px",flex:1,minWidth:0,outline:"none",caretColor:"currentColor"};
   const clearLoginFields = () => { setLoginEmail(""); setLoginPassword(""); setTeamName(""); setLoginError(null); setRegStep(1); setFirstName(""); setLastName(""); setSelectedCity(""); };
 
@@ -387,6 +411,7 @@ if (cur === null) {
       <div style={{marginTop:16}}>
         <div onClick={()=>{clearLoginFields();setPhase("signin")}} style={{cursor:"pointer",marginBottom:6}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>{"> [1] SIGN IN"}</div>
         <div onClick={()=>{clearLoginFields();setPhase("create")}} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>{"> [2] CREATE NEW TEAM"}</div>
+        <div onClick={()=>{setGuest(true);setVw("MKT")}} style={{cursor:"pointer",marginTop:6}} onMouseEnter={e=>e.currentTarget.style.opacity=0.7} onMouseLeave={e=>e.currentTarget.style.opacity=1}>{"> [3] I DON'T NEED AN ACCOUNT (JUST LOOKING)"}</div>
       </div>
     );
     if (phase === "signin") return (
@@ -616,20 +641,32 @@ return (
           <div onClick={()=>setMenu(false)} style={{position:"absolute",inset:0,zIndex:14}}/>
           <div style={{position:"absolute",top:22,left:2,background:hi,border:`1px solid ${fg}`,zIndex:15,width:"70%",maxHeight:"80%",overflow:"auto"}} className="palm-screen">
             <div style={{padding:"3px 6px",fontSize:13,color:vlo,borderBottom:`1px solid ${brd}`,fontWeight:700}}>MENU</div>
+            {guest ? (
+              <div onClick={()=>{exitGuest();setMenu(false)}} style={{padding:"4px 6px",fontSize:13,color:vlo,cursor:"pointer",fontWeight:700}}
+                onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Create Account</div>
+            ) : <>
             {[["Profile",()=>setVw("PRO")],["Settings",()=>setVw("SET")]].map(([l,fn],i)=>
               <div key={i} onClick={()=>{fn();setMenu(false)}} style={{padding:"4px 6px",fontSize:13,color:fg,cursor:"pointer"}}
                 onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{l}</div>)}
             <div onClick={()=>{doLogout();setMenu(false)}} style={{padding:"4px 6px",fontSize:13,color:"#885555",cursor:"pointer"}}
               onMouseEnter={e=>e.currentTarget.style.background=bg2} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Log Out</div>
+            </>}
           </div>
         </>}
 
+        {/* Guest banner — mobile */}
+        {guest&&<div style={{padding:"2px 6px",background:vlo,color:bgc,fontSize:11,textAlign:"center",flexShrink:0}}>
+          GUEST — not saved <span onClick={exitGuest} style={{cursor:"pointer",textDecoration:"underline",fontWeight:700}}>[SIGN UP]</span>
+        </div>}
+
         {/* Status */}
         <div style={{padding:"2px 6px",borderBottom:`1px solid ${brd}`,fontSize:12,color:lo,display:"flex",gap:6,alignItems:"center",flexShrink:0,flexWrap:"wrap"}}>
+          {guest ? <span style={{color:vlo,fontWeight:700}}>GUEST</span> : <>
           <span>${f$(rem)}</span>
           <span>W:{tW.toFixed(1)}</span>
           <span>TX:{MAX_TX-me.tx}</span>
           <span>{me.r.length}/13</span>
+          </>}
           <div style={{marginLeft:"auto",display:"flex",gap:2}}>
             {["MKT","PORT","RNK","?"].map(v=>
               <span key={v} onClick={()=>setVw(v)} style={{cursor:"pointer",padding:"1px 5px",fontSize:12,color:vw===v?bgc:lo,background:vw===v?vlo:"transparent",borderRadius:1}}>{v}</span>)}
@@ -685,7 +722,7 @@ return (
 
           {/* PORTFOLIO */}
           {vw==="PORT"&&<div style={{padding:"0 2px",overflowX:"hidden"}}>
-            <div style={{fontSize:12,color:lo,padding:"2px 4px"}}>{me.nm}</div>
+            <div style={{fontSize:12,color:lo,padding:"2px 4px"}}>{guest?"Guest":me.nm}</div>
             {me.r.length===0?<div style={{padding:"6px 6px",fontSize:12,lineHeight:1.6,color:fg}}>
               <div style={{fontWeight:700,fontSize:13,color:vlo,marginBottom:4}}>WELCOME TO WAR STREET</div>
               <div style={{marginBottom:4}}>You manage a fantasy baseball team. Buy and sell MLB players like stocks — their prices move with on-field performance and demand.</div>
@@ -739,9 +776,9 @@ return (
                 <th style={{...th2,width:"22%"}}>VAL</th>
               </tr></thead>
               <tbody>
-                {lb.map((o,i)=><tr key={o.id} style={{background:o.id===cur?hi:"transparent"}}>
+                {lb.map((o,i)=><tr key={o.id} style={{background:!guest&&o.id===cur?hi:"transparent"}}>
                   <td style={{...td2,color:i<3?vlo:lo,fontWeight:i<3?700:400}}>{i+1}</td>
-                  <td style={{...td2,fontWeight:o.id===cur?700:400,overflow:"hidden",textOverflow:"ellipsis"}}>{o.nm}{o.id===cur?" ◄":""}</td>
+                  <td style={{...td2,fontWeight:!guest&&o.id===cur?700:400,overflow:"hidden",textOverflow:"ellipsis"}}>{guest?`${o.nm.split(" ")[0]} (sign in to view)`:o.nm}{!guest&&o.id===cur?" ◄":""}</td>
                   <td style={{...td2,fontWeight:700}}>{o.w.toFixed(1)}</td>
                   <td style={{...td2,color:lo}}>{f$(o.v)}</td>
                 </tr>)}
@@ -1062,10 +1099,14 @@ return(
           {menu&&(<>
             <div onClick={()=>setMenu(false)} style={{position:"fixed",inset:0,zIndex:80}}/>
             <div style={{position:"absolute",top:"100%",left:0,marginTop:4,background:bg,border:`1px solid ${brd_d}`,zIndex:81,minWidth:220}}>
-              <div style={{padding:"6px 14px",color:amb,borderBottom:`1px solid ${brd_d}`,fontSize:14}}>{me.nm}</div>
+              <div style={{padding:"6px 14px",color:amb,borderBottom:`1px solid ${brd_d}`,fontSize:14}}>{guest?"Guest":me.nm}</div>
+              {guest ? (
+                <div onClick={()=>{exitGuest();setMenu(false)}} style={{padding:"8px 14px",cursor:"pointer",color:g,fontWeight:700,fontSize:16}} onMouseEnter={e=>e.currentTarget.style.background="#111"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Create Account</div>
+              ) : <>
               {[["Profile Info",()=>setVw("PROF")],["Settings",()=>setVw("SETTINGS")]].map(([label,fn],i)=>(
                 <div key={i} onClick={()=>{fn();setMenu(false)}} style={{padding:"8px 14px",cursor:"pointer",color:wh,fontSize:16}} onMouseEnter={e=>e.currentTarget.style.background="#111"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{label}</div>))}
               <div onClick={()=>{doLogout();setMenu(false)}} style={{padding:"8px 14px",cursor:"pointer",color:neg,fontSize:16}} onMouseEnter={e=>e.currentTarget.style.background="#111"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>Log Out</div>
+              </>}
             </div>
           </>)}
         </div>
@@ -1076,16 +1117,23 @@ return(
 
     {/* Status */}
     <div style={{padding:"3px 12px",borderBottom:`1px solid ${brd_d}`,display:"flex",gap:16,color:dim,fontSize:16,flexWrap:"wrap",alignItems:"center"}}>
+      {guest ? <span style={{color:amb,fontWeight:700}}>GUEST</span> : <>
       <span>BUDGET <span style={{color:amb}}>{f$(rem)}</span></span>
       <span>WAR <span style={{color:g}}>{tW.toFixed(1)}</span></span>
       <span>VALUE <span style={{color:g}}>{f$(pV)}</span></span>
       <span>P/L <span style={{color:pV-sp>=0?g:neg}}>{pV-sp>=0?"+":""}{f$(pV-sp)}</span></span>
       <span>TX <span style={{color:me.tx>=MAX_TX?neg:g}}>{MAX_TX-me.tx}</span>/{MAX_TX}</span>
       <span>ROSTER {me.r.length}/13</span>
+      </>}
       <span style={{color:"#2a2a2a",margin:"0 4px"}}>│</span>
       {["MKT","PORT","RANK","HELP"].map(v=>
         <span key={v} onClick={()=>setVw(v)} style={{cursor:"pointer",padding:"1px 8px",color:vw===v?bg:dim,background:vw===v?g:"transparent"}}>{v}</span>)}
     </div>
+
+    {/* Guest banner — desktop */}
+    {guest&&<div style={{padding:"3px 12px",borderBottom:`1px solid ${brd_d}`,background:"#111",fontSize:16,textAlign:"center",color:amb}}>
+      GUEST MODE — Nothing is saved. <span onClick={exitGuest} style={{cursor:"pointer",color:g,fontWeight:700,textDecoration:"underline"}}>[CREATE ACCOUNT]</span> to keep your team.
+    </div>}
 
     {/* Ticker */}
     <div style={{padding:"3px 0",borderBottom:`1px solid ${brd_d}`,background:"#060606",fontSize:18}}>
@@ -1154,7 +1202,7 @@ return(
 
       {/* PORTFOLIO */}
       {vw==="PORT"&&(<div>
-        <div style={{color:dim,marginBottom:6,fontSize:18}}>ROSTER -- {me.nm}</div>
+        <div style={{color:dim,marginBottom:6,fontSize:18}}>ROSTER -- {guest?"Guest":me.nm}</div>
         {me.r.length===0?<div style={{padding:"8px 0",lineHeight:1.8}}>
           <div style={{color:amb,marginBottom:6}}>WELCOME TO WAR STREET</div>
           <div style={{color:wh,marginBottom:4}}>Buy and sell MLB players like stocks. Prices move with on-field performance and demand.</div>
@@ -1201,9 +1249,9 @@ return(
         <table style={{width:"100%",borderCollapse:"collapse"}}>
           <thead><tr>{["#","TEAM","WAR","VALUE"].map(h=><th key={h} style={th2_d}>{h}</th>)}</tr></thead>
           <tbody>
-            {lb.map((o,i)=>(<tr key={o.id} style={{background:o.id===cur?"#081208":"transparent"}}>
+            {lb.map((o,i)=>(<tr key={o.id} style={{background:!guest&&o.id===cur?"#081208":"transparent"}}>
               <td style={{...td2_d,color:i<3?amb:dim}}>{i+1}</td>
-              <td style={{...td2_d,color:o.id===cur?amb:wh}}>{o.nm}{o.id===cur?" ◄":""}</td>
+              <td style={{...td2_d,color:!guest&&o.id===cur?amb:wh}}>{guest?`${o.nm.split(" ")[0]} (sign in to view)`:o.nm}{!guest&&o.id===cur?" ◄":""}</td>
               <td style={td2_d}>{o.w.toFixed(1)}</td>
               <td style={{...td2_d,color:dim}}>{f$(o.v)}</td>
             </tr>))}
