@@ -18,9 +18,13 @@ def pull_war(season: int = 2026):
 
     # Pull hitter WAR
     print(f"Pulling {season} batting stats from FanGraphs...")
-    hitters = batting_stats(season, qual=0)
+    try:
+        hitters = batting_stats(season, qual=0)
+    except Exception as e:
+        print(f"No batting stats available (preseason?): {e}")
+        hitters = None
     hitter_updates = 0
-    for _, row in hitters.iterrows():
+    for _, row in (hitters.iterrows() if hitters is not None else []):
         name = row.get("Name", "")
         war = row.get("WAR", 0)
         games = row.get("G", 0)
@@ -50,9 +54,13 @@ def pull_war(season: int = 2026):
 
     # Pull pitcher WAR
     print(f"Pulling {season} pitching stats from FanGraphs...")
-    pitchers = pitching_stats(season, qual=0)
+    try:
+        pitchers = pitching_stats(season, qual=0)
+    except Exception as e:
+        print(f"No pitching stats available (preseason?): {e}")
+        pitchers = None
     pitcher_updates = 0
-    for _, row in pitchers.iterrows():
+    for _, row in (pitchers.iterrows() if pitchers is not None else []):
         name = row.get("Name", "")
         war = row.get("WAR", 0)
         games = row.get("G", 0)
