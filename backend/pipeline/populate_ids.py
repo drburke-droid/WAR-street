@@ -45,6 +45,13 @@ def populate_ids():
     players = result.data
     matched = 0
     skipped = 0
+    errors = 0
+    used_mlb_ids = set()
+
+    # Collect mlb_ids already in DB to avoid duplicate key violations
+    for p in players:
+        if p.get("mlb_id"):
+            used_mlb_ids.add(p["mlb_id"])
 
     for p in players:
         if p.get("mlb_id") and p.get("fangraphs_id"):
@@ -62,19 +69,30 @@ def populate_ids():
 
         ids = lookup.get(key)
         if ids:
+            mlb_id, fg_id = ids
+            # Skip if this mlb_id is already used by another player
+            if mlb_id in used_mlb_ids and not p.get("mlb_id"):
+                print(f"  Skipping {db_name}: mlb_id {mlb_id} already in use")
+                errors += 1
+                continue
             update = {}
             if not p.get("mlb_id"):
-                update["mlb_id"] = ids[0]
+                update["mlb_id"] = mlb_id
+                used_mlb_ids.add(mlb_id)
             if not p.get("fangraphs_id"):
-                update["fangraphs_id"] = ids[1]
+                update["fangraphs_id"] = fg_id
             if update:
-                sb.table("players").update(update).eq("id", p["id"]).execute()
-                matched += 1
+                try:
+                    sb.table("players").update(update).eq("id", p["id"]).execute()
+                    matched += 1
+                except Exception as e:
+                    print(f"  Error updating {db_name}: {e}")
+                    errors += 1
         else:
             print(f"  No match: {db_name} (key: {key})")
 
     print(f"Matched {matched}, skipped {skipped} (already had IDs), "
-          f"unmatched {len(players) - matched - skipped}")
+          f"errors {errors}, unmatched {len(players) - matched - skipped - errors}")
 
 
 if __name__ == "__main__":
