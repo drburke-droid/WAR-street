@@ -1,17 +1,25 @@
 """Price recalculation orchestration — runs the engine on all players."""
 
+import json
+
 from db.client import get_supabase
 from pricing.engine import calc_price
 
+MAX_HISTORY = 180  # ~6 months of daily entries
+
 
 def recalculate_all_prices():
-    """Pull all players, recalculate prices, write back to DB."""
+    """Pull all players, recalculate prices, write back to DB.
+
+    Appends the old current_price and war_ytd to their respective
+    history JSONB arrays before overwriting with new values.
+    """
     sb = get_supabase()
     result = sb.table("players").select("*").execute()
     players = result.data
 
     for p in players:
-        result = calc_price(
+        new = calc_price(
             player_type=p["player_type"],
             projected_war=float(p["projected_war"] or 0),
             war_ytd=float(p["war_ytd"] or 0),
@@ -25,9 +33,25 @@ def recalculate_all_prices():
             hard_hit=float(p["hard_hit_pct"]) if p.get("hard_hit_pct") else None,
         )
 
+        # Append old price to history (cap at MAX_HISTORY)
+        price_hist = p.get("price_history") or []
+        if isinstance(price_hist, str):
+            price_hist = json.loads(price_hist)
+        price_hist.append(p["current_price"] or 0)
+        price_hist = price_hist[-MAX_HISTORY:]
+
+        # Append old war_ytd to history
+        war_hist = p.get("war_history") or []
+        if isinstance(war_hist, str):
+            war_hist = json.loads(war_hist)
+        war_hist.append(round(float(p["war_ytd"] or 0), 1))
+        war_hist = war_hist[-MAX_HISTORY:]
+
         sb.table("players").update({
             "prev_price": p["current_price"],
-            "current_price": result["price"],
+            "current_price": new["price"],
+            "price_history": price_hist,
+            "war_history": war_hist,
         }).eq("id", p["id"]).execute()
 
     return len(players)

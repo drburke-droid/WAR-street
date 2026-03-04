@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
 import hashlib
+import json
 import logging
 import math
 
@@ -70,6 +71,38 @@ def _fake_history(player_id: int, current: float, n: int, pct: float) -> list[fl
     return pts
 
 
+def _parse_jsonb_array(raw) -> list:
+    """Parse a JSONB column that may come back as str, list, or None."""
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        try:
+            return json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return []
+    if isinstance(raw, list):
+        return raw
+    return []
+
+
+def _real_or_fake_price_history(p: dict, curr: int) -> list[int]:
+    """Use real DB history if available, otherwise fall back to fake."""
+    hist = _parse_jsonb_array(p.get("price_history"))
+    if hist:
+        # Append current price as the latest point, trim to last 14
+        return [round(v) for v in (hist + [curr])[-14:]]
+    return [round(v) for v in _fake_history(p["id"], curr, 14, 0.06)]
+
+
+def _real_or_fake_war_history(p: dict) -> list[float]:
+    """Use real DB history if available, otherwise fall back to fake."""
+    hist = _parse_jsonb_array(p.get("war_history"))
+    war_ytd = float(p["war_ytd"] or 0.1)
+    if hist:
+        return [round(float(v), 1) for v in (hist + [war_ytd])[-10:]]
+    return [round(v, 1) for v in _fake_history(p["id"], war_ytd, 10, 0.15)]
+
+
 def _compute_volume(sb) -> dict[int, int]:
     """Count transactions per player in last 14 days, normalize to 0-100."""
     cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).isoformat()
@@ -135,8 +168,8 @@ def list_players(
             volume=vol_map.get(p["id"], 0),
             opponent=schedule.get(team_abbrev, ""),
             tb_k=None,         # future: rolling 14d total bases / K's
-            price_history=[round(v) for v in _fake_history(p["id"], curr, 14, 0.06)],
-            war_history=[round(v, 1) for v in _fake_history(p["id"], float(p["war_ytd"] or 0.1), 10, 0.15)],
+            price_history=_real_or_fake_price_history(p, curr),
+            war_history=_real_or_fake_war_history(p),
         ))
 
     # Sort

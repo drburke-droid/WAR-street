@@ -1,5 +1,6 @@
-"""Admin routes: weekly reset, cleanup, password reset. Protected by JWT_SECRET as admin key."""
+"""Admin routes: weekly reset, cleanup, password reset, pipeline triggers. Protected by JWT_SECRET as admin key."""
 
+import logging
 import os
 import secrets
 
@@ -7,6 +8,8 @@ from fastapi import APIRouter, HTTPException, Header
 
 from auth import hash_password
 from db.client import get_supabase_admin
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -61,3 +64,44 @@ def delete_owner(owner_id: int, x_admin_key: str = Header(None)):
     if not result.data:
         raise HTTPException(404, "Owner not found")
     return {"deleted": owner_id}
+
+
+# --------------- Pipeline triggers ---------------
+
+@router.post("/pipeline/war-pull")
+def pipeline_war_pull(x_admin_key: str = Header(None)):
+    """Pull updated WAR from FanGraphs via pybaseball."""
+    _check_admin_key(x_admin_key)
+    try:
+        from pipeline.war_pull import pull_war
+        pull_war()
+        return {"status": "ok", "step": "war-pull"}
+    except Exception as e:
+        logger.exception("war-pull failed")
+        raise HTTPException(500, f"war-pull failed: {e}")
+
+
+@router.post("/pipeline/boxscores")
+def pipeline_boxscores(x_admin_key: str = Header(None)):
+    """Pull yesterday's box scores from MLB Stats API."""
+    _check_admin_key(x_admin_key)
+    try:
+        from pipeline.boxscores import pull_boxscores
+        pull_boxscores()
+        return {"status": "ok", "step": "boxscores"}
+    except Exception as e:
+        logger.exception("boxscores failed")
+        raise HTTPException(500, f"boxscores failed: {e}")
+
+
+@router.post("/pipeline/recalc")
+def pipeline_recalc(x_admin_key: str = Header(None)):
+    """Recalculate all prices and owner WAR totals."""
+    _check_admin_key(x_admin_key)
+    try:
+        from pipeline.recalc import nightly
+        nightly()
+        return {"status": "ok", "step": "recalc"}
+    except Exception as e:
+        logger.exception("recalc failed")
+        raise HTTPException(500, f"recalc failed: {e}")

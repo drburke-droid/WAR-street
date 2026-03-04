@@ -67,6 +67,10 @@ CREATE TABLE IF NOT EXISTS transactions (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Migration: add price/war history columns
+ALTER TABLE players ADD COLUMN IF NOT EXISTS price_history JSONB DEFAULT '[]';
+ALTER TABLE players ADD COLUMN IF NOT EXISTS war_history JSONB DEFAULT '[]';
+
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_roster_owner ON roster_entries(owner_id);
 CREATE INDEX IF NOT EXISTS idx_roster_player ON roster_entries(player_id);
