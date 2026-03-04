@@ -12,21 +12,21 @@ jobs:
     steps:
       - name: Pull WAR from FanGraphs
         run: |
-          curl -sf -X POST \
+          curl -v -X POST \
             https://war-street-production.up.railway.app/admin/pipeline/war-pull \
             -H "x-admin-key: ${{ secrets.JWT_SECRET }}" \
             --max-time 120
 
       - name: Pull box scores from MLB API
         run: |
-          curl -sf -X POST \
+          curl -v -X POST \
             https://war-street-production.up.railway.app/admin/pipeline/boxscores \
             -H "x-admin-key: ${{ secrets.JWT_SECRET }}" \
             --max-time 60
 
       - name: Recalculate prices
         run: |
-          curl -sf -X POST \
+          curl -v -X POST \
             https://war-street-production.up.railway.app/admin/pipeline/recalc \
             -H "x-admin-key: ${{ secrets.JWT_SECRET }}" \
             --max-time 60
