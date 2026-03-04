@@ -15,18 +15,18 @@ jobs:
           curl -v -X POST \
             https://war-street-production.up.railway.app/admin/pipeline/war-pull \
             -H "x-admin-key: ${{ secrets.JWT_SECRET }}" \
-            --max-time 120
+            --max-time 300
 
       - name: Pull box scores from MLB API
         run: |
           curl -v -X POST \
             https://war-street-production.up.railway.app/admin/pipeline/boxscores \
             -H "x-admin-key: ${{ secrets.JWT_SECRET }}" \
-            --max-time 60
+            --max-time 180
 
       - name: Recalculate prices
         run: |
           curl -v -X POST \
             https://war-street-production.up.railway.app/admin/pipeline/recalc \
             -H "x-admin-key: ${{ secrets.JWT_SECRET }}" \
-            --max-time 60
+            --max-time 180
