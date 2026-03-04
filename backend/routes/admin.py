@@ -68,6 +68,19 @@ def delete_owner(owner_id: int, x_admin_key: str = Header(None)):
 
 # --------------- Pipeline triggers ---------------
 
+@router.post("/pipeline/populate-ids")
+def pipeline_populate_ids(x_admin_key: str = Header(None)):
+    """Populate mlb_id and fangraphs_id from Chadwick register. One-time setup."""
+    _check_admin_key(x_admin_key)
+    try:
+        from pipeline.populate_ids import populate_ids
+        populate_ids()
+        return {"status": "ok", "step": "populate-ids"}
+    except Exception as e:
+        logger.exception("populate-ids failed")
+        raise HTTPException(500, f"populate-ids failed: {e}")
+
+
 @router.post("/pipeline/war-pull")
 def pipeline_war_pull(x_admin_key: str = Header(None)):
     """Pull updated WAR from FanGraphs via pybaseball."""

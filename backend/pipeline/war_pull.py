@@ -33,7 +33,7 @@ def pull_war(season: int = 2026):
             continue
         last = parts[-1]
 
-        result = sb.table("players").select("id, name").eq("player_type", "H").ilike("name", f"{last}%").execute()
+        result = sb.table("players").select("id, name, fangraphs_id").eq("player_type", "H").ilike("name", f"{last}%").execute()
         if result.data and len(result.data) == 1:
             update = {
                 "war_ytd": round(float(war), 1),
@@ -41,6 +41,10 @@ def pull_war(season: int = 2026):
             }
             if ops is not None:
                 update["season_ops"] = round(float(ops), 3)
+            # Capture FanGraphs ID if we don't have it yet
+            fg_id = row.get("IDfg")
+            if fg_id and not result.data[0].get("fangraphs_id"):
+                update["fangraphs_id"] = int(fg_id)
             sb.table("players").update(update).eq("id", result.data[0]["id"]).execute()
             hitter_updates += 1
 
@@ -59,7 +63,7 @@ def pull_war(season: int = 2026):
             continue
         last = parts[-1]
 
-        result = sb.table("players").select("id, name").eq("player_type", "P").ilike("name", f"{last}%").execute()
+        result = sb.table("players").select("id, name, fangraphs_id").eq("player_type", "P").ilike("name", f"{last}%").execute()
         if result.data and len(result.data) == 1:
             update = {
                 "war_ytd": round(float(war), 1),
@@ -67,6 +71,9 @@ def pull_war(season: int = 2026):
             }
             if era is not None:
                 update["season_era"] = round(float(era), 2)
+            fg_id = row.get("IDfg")
+            if fg_id and not result.data[0].get("fangraphs_id"):
+                update["fangraphs_id"] = int(fg_id)
             sb.table("players").update(update).eq("id", result.data[0]["id"]).execute()
             pitcher_updates += 1
 
