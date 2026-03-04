@@ -564,8 +564,8 @@ if (cur === null && !guest) {
   return (
     <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@800&display=swap'); @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}} html,body{overflow:hidden !important;position:fixed !important;width:100% !important;height:100% !important;touch-action:none} .palm-login input{caret-color:#2d4a2d}`}</style>
-      <div style={{position:"relative",width:"min(120vw, calc(100dvh * 768 / 1376 / 1.25))",height:"min(100dvh, calc(120vw * 1376 * 1.25 / 768))",touchAction:"none"}}>
-        <div className="palm-login" style={{position:"absolute",left:"4.30%",top:"8.54%",width:"94.01%",height:"74.81%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1,touchAction:"none"}}>
+      <div style={{position:"relative",width:"min(120vw, calc(100dvh * 768 / 1376 / 1.15))",height:"min(100dvh, calc(120vw * 1376 * 1.15 / 768))",touchAction:"none"}}>
+        <div className="palm-login" style={{position:"absolute",left:"4.30%",top:"9.29%",width:"94.01%",height:"72.69%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1,touchAction:"none"}}>
           <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
           <div style={{position:"relative",zIndex:4,textAlign:"center",padding:"10px 16px",maxWidth:"90%"}}>
             <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:23,color:vlo_m,letterSpacing:"2px",opacity:logoOpacity}}>WAR STREET</div>
@@ -579,9 +579,9 @@ if (cur === null && !guest) {
           </div>
         </div>
         <div style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:2,overflow:"hidden"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:"16%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% auto",backgroundPosition:"top center",backgroundRepeat:"no-repeat"}}/>
-          <div style={{position:"absolute",top:"16%",left:0,right:0,height:"68%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% 166.67%",backgroundPosition:"0% 50%",backgroundRepeat:"no-repeat"}}/>
-          <div style={{position:"absolute",bottom:0,left:0,right:0,height:"16%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% auto",backgroundPosition:"bottom center",backgroundRepeat:"no-repeat"}}/>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:"17.39%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% auto",backgroundPosition:"top center",backgroundRepeat:"no-repeat"}}/>
+          <div style={{position:"absolute",top:"17.39%",left:0,right:0,height:"65.22%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% 166.67%",backgroundPosition:"0% 50%",backgroundRepeat:"no-repeat"}}/>
+          <div style={{position:"absolute",bottom:0,left:0,right:0,height:"17.39%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% auto",backgroundPosition:"bottom center",backgroundRepeat:"no-repeat"}}/>
         </div>
       </div>
     </div>
@@ -613,15 +613,15 @@ return (
     {/* Palm Device — real image frame */}
     <div style={{
       position:"relative",
-      width: "min(120vw, calc(100dvh * 768 / 1376 / 1.25))",
-      height: "min(100dvh, calc(120vw * 1376 * 1.25 / 768))",
+      width: "min(120vw, calc(100dvh * 768 / 1376 / 1.15))",
+      height: "min(100dvh, calc(120vw * 1376 * 1.15 / 768))",
       touchAction:"none",
     }}>
       {/* LCD Screen — positioned in the transparent cutout */}
       <div className="palm-screen" style={{
         position:"absolute",
-        left:"4.30%", top:"8.54%",
-        width:"94.01%", height:"74.81%",
+        left:"4.30%", top:"9.29%",
+        width:"94.01%", height:"72.69%",
         borderRadius: 12,
         background: bgc,
         overflow:"hidden",
@@ -893,25 +893,25 @@ return (
 
       {/* Palm frame — 3-slice vertical: top + stretched middle + bottom */}
       <div style={{position:"absolute",inset:0,pointerEvents:"none",zIndex:2,overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:"16%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% auto",backgroundPosition:"top center",backgroundRepeat:"no-repeat"}}/>
-        <div style={{position:"absolute",top:"16%",left:0,right:0,height:"68%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% 166.67%",backgroundPosition:"0% 50%",backgroundRepeat:"no-repeat"}}/>
-        <div style={{position:"absolute",bottom:0,left:0,right:0,height:"16%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% auto",backgroundPosition:"bottom center",backgroundRepeat:"no-repeat"}}/>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:"17.39%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% auto",backgroundPosition:"top center",backgroundRepeat:"no-repeat"}}/>
+        <div style={{position:"absolute",top:"17.39%",left:0,right:0,height:"65.22%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% 166.67%",backgroundPosition:"0% 50%",backgroundRepeat:"no-repeat"}}/>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:"17.39%",backgroundImage:"url(/WAR-street/palm-frame.png)",backgroundSize:"100% auto",backgroundPosition:"bottom center",backgroundRepeat:"no-repeat"}}/>
       </div>
 
       {/* Palm physical button hotspots */}
       {(()=>{
         const DBG = false;
-        const bst = (left,top,w,h,color) => ({position:"absolute",left,top,width:w,height:h,zIndex:3,cursor:"pointer",borderRadius:h==="6.1%"||h==="5.9%"||h==="5.6%"||h==="5.7%"?"50%":"40%",
+        const bst = (left,top,w,h,color) => ({position:"absolute",left,top,width:w,height:h,zIndex:3,cursor:"pointer",borderRadius:h==="6.6%"||h==="6.4%"||h==="6.1%"||h==="6.2%"?"50%":"40%",
           ...(DBG?{background:color,opacity:0.5,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:700,fontFamily:"sans-serif"}:{})
         });
         const scrollBy = (dir) => { if(palmScrollRef.current) palmScrollRef.current.scrollBy({top:dir*80,behavior:"smooth"}); };
         return <>
-          <div onClick={openPaper} style={bst("5.5%","87.9%","14.8%","5.9%","rgba(255,0,0,0.7)")} title="Box Scores"/>
-          <div onClick={()=>setVw("PORT")} style={bst("25.8%","87.8%","14.8%","6.1%","rgba(0,180,0,0.7)")} title="Portfolio"/>
-          <div onClick={()=>scrollBy(-1)} style={bst("44.5%","88.5%","14.1%","2.6%","rgba(0,100,255,0.7)")} title="Scroll Up"/>
-          <div onClick={()=>scrollBy(1)} style={bst("44.5%","93.5%","13.8%","1.2%","rgba(0,200,200,0.7)")} title="Scroll Down"/>
-          <div onClick={()=>setVw("MKT")} style={bst("64.1%","88.2%","14.3%","5.6%","rgba(255,140,0,0.7)")} title="Market"/>
-          <div onClick={()=>setMenu(m=>!m)} style={bst("84.6%","88%","10.2%","5.7%","rgba(160,0,220,0.7)")} title="Settings"/>
+          <div onClick={openPaper} style={bst("5.5%","86.9%","14.8%","6.4%","rgba(255,0,0,0.7)")} title="Box Scores"/>
+          <div onClick={()=>setVw("PORT")} style={bst("25.8%","86.7%","14.8%","6.6%","rgba(0,180,0,0.7)")} title="Portfolio"/>
+          <div onClick={()=>scrollBy(-1)} style={bst("44.5%","87.5%","14.1%","2.9%","rgba(0,100,255,0.7)")} title="Scroll Up"/>
+          <div onClick={()=>scrollBy(1)} style={bst("44.5%","93.0%","13.8%","1.3%","rgba(0,200,200,0.7)")} title="Scroll Down"/>
+          <div onClick={()=>setVw("MKT")} style={bst("64.1%","87.1%","14.3%","6.1%","rgba(255,140,0,0.7)")} title="Market"/>
+          <div onClick={()=>setMenu(m=>!m)} style={bst("84.6%","87.0%","10.2%","6.2%","rgba(160,0,220,0.7)")} title="Settings"/>
         </>;
       })()}
     </div>
