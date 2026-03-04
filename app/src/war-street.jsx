@@ -139,6 +139,7 @@ const [msg, setMsg] = useState(null);
 const [chgFrame, setChgFrame] = useState("1D");
 const [sparkFrame, setSparkFrame] = useState("SZN");
 const [menu, setMenu] = useState(false);
+const [posFilt, setPosFilt] = useState(null);
 const frames = ["1D","1W","2W","1M"];
 const sparkFrames = ["1W","1M","SZN"];
 
@@ -311,8 +312,13 @@ if (ft==="HIT") l=l.filter(p=>p.tp==="H");
 if (ft==="PIT") l=l.filter(p=>p.tp==="P");
 if (q) l=l.filter(p=>p.nm.toLowerCase().includes(q.toLowerCase())||p.tm.toLowerCase().includes(q.toLowerCase()));
 const ss = {PRICE:(a,b)=>b.c-a.c, WAR:(a,b)=>b.w-a.w, CHG:(a,b)=>simChg(b,chgFrame).pct-simChg(a,chgFrame).pct, AZ:(a,b)=>a.nm.localeCompare(b.nm), VOL:(a,b)=>(b.vol||0)-(a.vol||0)};
-l.sort(ss[so]||ss.PRICE); return l;
-}, [pl,ft,so,q,chgFrame]);
+const cmp = ss[so]||ss.PRICE;
+if (posFilt) {
+  const elig = p => p.el.some(s => dSlot(s) === posFilt);
+  l.sort((a,b) => { const ae=elig(a)?0:1, be=elig(b)?0:1; return ae!==be ? ae-be : cmp(a,b) });
+} else { l.sort(cmp); }
+return l;
+}, [pl,ft,so,q,chgFrame,posFilt]);
 
 const flash = useCallback((m,e) => { setMsg({m,e}); setTimeout(()=>setMsg(null),2500) },[]);
 
@@ -669,7 +675,7 @@ return (
           </>}
           <div style={{marginLeft:"auto",display:"flex",gap:2}}>
             {["MKT","PORT","RNK","?"].map(v=>
-              <span key={v} onClick={()=>setVw(v)} style={{cursor:"pointer",padding:"1px 5px",fontSize:12,color:vw===v?bgc:lo,background:vw===v?vlo:"transparent",borderRadius:1}}>{v}</span>)}
+              <span key={v} onClick={()=>{setVw(v);setPosFilt(null)}} style={{cursor:"pointer",padding:"1px 5px",fontSize:12,color:vw===v?bgc:lo,background:vw===v?vlo:"transparent",borderRadius:1}}>{v}</span>)}
           </div>
         </div>
 
@@ -683,6 +689,7 @@ return (
               <span style={{color:brd}}>|</span>
               {["$","WAR","Δ","AZ"].map((v,i)=>{const k=["PRICE","WAR","CHG","AZ"][i];return(
                 <span key={k} onClick={()=>setSo(k)} style={{cursor:"pointer",color:so===k?bgc:lo,background:so===k?vlo:"transparent",padding:"1px 4px",borderRadius:1}}>{v}</span>)})}
+              {posFilt&&<span onClick={()=>setPosFilt(null)} style={{cursor:"pointer",color:bgc,background:vlo,padding:"1px 4px",borderRadius:1,fontSize:11,fontWeight:700}}>{posFilt} ✕</span>}
               <input value={q} onChange={e=>setQ(e.target.value)} placeholder="find" style={{marginLeft:"auto",width:50,background:"transparent",border:`1px solid ${brd}`,color:fg,fontFamily:"inherit",fontSize:10,padding:"1px 3px"}}/>
             </div>
             <table style={{width:"100%",borderCollapse:"collapse",tableLayout:"fixed"}}>
@@ -750,7 +757,7 @@ return (
               <thead><tr>{["SL","PLAYER","$","P/L","W",""].map(h=><th key={h} style={th2}>{h}</th>)}</tr></thead>
               <tbody>
                 {rE.map(({slot:s,p,paid,pat})=>{
-                  if(!p)return<tr key={s}><td style={{...td2,color:brd}}>{dSlot(s)}</td><td colSpan={5} style={{...td2,color:brd}}>-- empty --</td></tr>;
+                  if(!p)return<tr key={s} onClick={()=>{setPosFilt(dSlot(s));setVw("MKT");setFt("ALL")}} style={{cursor:"pointer"}}><td style={{...td2,color:vlo,fontWeight:700}}>{dSlot(s)}</td><td colSpan={5} style={{...td2,color:brd}}>-- empty --</td></tr>;
                   const pl2=p.c-paid;const hd=holdDays(s,pat);
                   return<tr key={s}>
                     <td style={{...td2,color:vlo,fontWeight:700}}>{dSlot(s)}</td>
@@ -1127,7 +1134,7 @@ return(
       </>}
       <span style={{color:"#2a2a2a",margin:"0 4px"}}>│</span>
       {["MKT","PORT","RANK","HELP"].map(v=>
-        <span key={v} onClick={()=>setVw(v)} style={{cursor:"pointer",padding:"1px 8px",color:vw===v?bg:dim,background:vw===v?g:"transparent"}}>{v}</span>)}
+        <span key={v} onClick={()=>{setVw(v);setPosFilt(null)}} style={{cursor:"pointer",padding:"1px 8px",color:vw===v?bg:dim,background:vw===v?g:"transparent"}}>{v}</span>)}
     </div>
 
     {/* Guest banner — desktop */}
@@ -1151,6 +1158,7 @@ return(
           <span style={{color:dim}}>SORT</span>
           {["PRICE","WAR","CHG","AZ","VOL"].map(v=>
             <span key={v} onClick={()=>setSo(v)} style={{cursor:"pointer",color:so===v?bg:dim,background:so===v?g:"transparent",padding:"1px 8px"}}>{v}</span>)}
+          {posFilt&&<span onClick={()=>setPosFilt(null)} style={{cursor:"pointer",color:bg,background:amb,padding:"1px 10px",fontWeight:700,fontSize:14}}>{posFilt} ✕</span>}
           <input value={q} onChange={e=>setQ(e.target.value)} placeholder="> search" style={{marginLeft:"auto",background:"transparent",border:`1px solid ${brd_d}`,color:g,fontFamily:"inherit",fontSize:16,padding:"2px 8px",width:180}}/>
         </div>
         <div style={{overflowX:"auto"}}>
@@ -1227,7 +1235,7 @@ return(
           <thead><tr>{["SLOT","PLAYER","TM","PRICE","PAID","P/L","WAR",""].map((h,i)=><th key={h} style={th2_d}>{h}</th>)}</tr></thead>
           <tbody>
             {rE.map(({slot:s,p,paid,pat})=>{
-              if(!p)return(<tr key={s}><td style={{...td2_d,color:"#2a2a2a"}}>{dSlot(s)}</td><td colSpan={7} style={{...td2_d,color:"#1a1a1a"}}>-- empty --</td></tr>);
+              if(!p)return(<tr key={s} onClick={()=>{setPosFilt(dSlot(s));setVw("MKT");setFt("ALL")}} style={{cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background="#0a120a"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}><td style={{...td2_d,color:amb}}>{dSlot(s)}</td><td colSpan={7} style={{...td2_d,color:"#2a2a2a"}}>-- empty --</td></tr>);
               const pl2=p.c-paid;const hd=holdDays(s,pat);
               return(<tr key={s}>
                 <td style={{...td2_d,color:amb}}>{dSlot(s)}</td>
