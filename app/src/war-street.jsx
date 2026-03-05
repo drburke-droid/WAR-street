@@ -594,8 +594,8 @@ if (cur === null && !guest) {
 if (isMobile) {
 const fg="#2d4a2d",bgc="#b8c8a0",bg2="#a8b890",brd="#8a9a72",hi="#c8d8b0",lo="#7a8a62",vlo="#5a6a42";
 const pad={padding:"3px 4px",whiteSpace:"nowrap"};
-const th2={...pad,color:lo,textAlign:"left",borderBottom:`1px solid ${brd}`,position:"sticky",top:0,background:bgc,fontSize:13,zIndex:2};
-const td2={...pad,borderBottom:`1px solid ${brd}`,fontSize:14};
+const th2={...pad,color:lo,textAlign:"left",borderBottom:`1px solid ${brd}`,position:"sticky",top:0,background:bgc,fontSize:11,zIndex:2};
+const td2={...pad,borderBottom:`1px solid ${brd}`,fontSize:11};
 
 return (
   <div style={{background:"#1a1a1a",height:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",padding:0,overflow:"hidden",maxWidth:"100vw",touchAction:"none",position:"fixed",inset:0}}>
@@ -702,7 +702,7 @@ return (
                 <th style={{...th2,width:"12%"}}>TM</th>
                 <th style={{...th2,width:"12%"}}>PS</th>
                 <th style={{...th2,width:"16%"}}>$</th>
-                <th style={{...th2,width:"14%",cursor:"pointer"}} onClick={cycleFrame}>Δ<span style={{color:vlo,fontSize:8}}>[{chgFrame}]</span></th>
+                <th style={{...th2,width:"14%",cursor:"pointer"}} onClick={cycleFrame}>Δ<span style={{color:vlo,fontSize:7}}>[{chgFrame}]</span></th>
                 <th style={{...th2,width:"8%"}}>W</th>
                 <th style={{...th2,width:"10%"}}></th>
               </tr></thead>
@@ -715,14 +715,14 @@ return (
                   return(
                     <tr key={p.id} style={{background:mine?hi:"transparent"}}>
                       <td style={{...td2,color:mine?vlo:fg,fontWeight:mine?700:400,overflow:"hidden",textOverflow:"ellipsis"}}>{p.nm}</td>
-                      <td style={{...td2,color:lo,fontSize:12}}>{p.tm}</td>
-                      <td style={{...td2,fontSize:11}} title={allPos.join("/")}>{pos}</td>
+                      <td style={{...td2,color:lo,fontSize:10}}>{p.tm}</td>
+                      <td style={{...td2,fontSize:10}} title={allPos.join("/")}>{pos}</td>
                       <td style={{...td2,fontWeight:700}}>{f$(p.c)}</td>
                       <td style={td2}>{ch.pct>=0?"+":""}{ch.pct}%</td>
                       <td style={td2}>{p.w.toFixed(1)}</td>
                       <td style={{...td2,textAlign:"center"}}>
-                        {mine?<span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:13,fontWeight:700}}>SELL</span>
-                        :ok?<span onClick={()=>openBuy(p)} style={{cursor:"pointer",color:vlo,fontSize:13,fontWeight:700}}>BUY</span>
+                        {mine?<span onClick={()=>openSell(p)} style={{cursor:"pointer",color:"#885555",fontSize:11,fontWeight:700}}>SELL</span>
+                        :ok?<span onClick={()=>openBuy(p)} style={{cursor:"pointer",color:vlo,fontSize:11,fontWeight:700}}>BUY</span>
                         :<span style={{color:brd,fontSize:12}}>--</span>}
                       </td>
                     </tr>);
@@ -765,11 +765,11 @@ return (
                   const pl2=p.c-paid;const hd=holdDays(s,pat);
                   return<tr key={s}>
                     <td style={{...td2,color:vlo,fontWeight:700}}>{dSlot(s)}</td>
-                    <td style={{...td2,overflow:"hidden",textOverflow:"ellipsis"}}>{p.nm}{hd>0?<span style={{color:"#885555",fontSize:10}}> {hd}d</span>:null}</td>
+                    <td style={{...td2,overflow:"hidden",textOverflow:"ellipsis"}}>{p.nm}{hd>0?<span style={{color:"#885555",fontSize:9}}> {hd}d</span>:null}</td>
                     <td style={{...td2,fontWeight:700}}>{f$(p.c)}</td>
                     <td style={{...td2,fontWeight:700}}>{pl2>=0?"+":""}{f$(pl2)}</td>
                     <td style={td2}>{p.w.toFixed(1)}</td>
-                    <td style={td2}><span onClick={()=>openSell(p)} style={{cursor:"pointer",color:hd>0?brd:"#885555",fontSize:13}}>{hd>0?"◼":"✕"}</span></td>
+                    <td style={td2}><span onClick={()=>openSell(p)} style={{cursor:"pointer",color:hd>0?brd:"#885555",fontSize:11}}>{hd>0?"◼":"✕"}</span></td>
                   </tr>})}
               </tbody>
             </table>
