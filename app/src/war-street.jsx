@@ -567,12 +567,12 @@ if (cur === null && !guest) {
       <div style={{position:"relative",width:"min(132vw, calc(110dvh * 768 / 1376 / 1.15))",height:"min(110dvh, calc(132vw * 1376 * 1.15 / 768))",touchAction:"none"}}>
         <div className="palm-login" style={{position:"absolute",left:"4.30%",top:"9.29%",width:"94.01%",height:"72.69%",borderRadius:12,background:bgc_m,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Silkscreen',monospace",color:fg_m,zIndex:1,touchAction:"none"}}>
           <div style={{position:"absolute",inset:0,background:`repeating-linear-gradient(0deg,rgba(0,0,0,0.03) 0px,rgba(0,0,0,0.03) 1px,transparent 1px,transparent 2px)`,pointerEvents:"none",zIndex:3}}/>
-          <div style={{position:"relative",zIndex:4,textAlign:"center",padding:"10px 16px",maxWidth:"90%"}}>
+          <div style={{position:"absolute",top:"50%",left:"5%",right:"5%",transform:"translateY(-50%)",zIndex:4,textAlign:"center",padding:"10px 16px",overflow:"hidden"}}>
             <div style={{fontFamily:"'JetBrains Mono',monospace",fontWeight:800,fontSize:23,color:vlo_m,letterSpacing:"2px",opacity:logoOpacity}}>WAR STREET</div>
             <div style={{fontSize:10,color:lo_m,marginTop:3,opacity:logoOpacity}}>FANTASY BASEBALL STOCK MARKET</div>
             {loginPhase !== "boot" && (
               <div style={{fontSize:12,color:fg_m,textAlign:"left",marginTop:12,lineHeight:1.5}}>
-                <pre style={{margin:0,fontFamily:"inherit",whiteSpace:"pre-wrap",fontSize:12}}>{typedText}{(loginPhase==="typing"||loginPhase==="menu")&&<span style={{animation:"blink 1s step-end infinite"}}>█</span>}</pre>
+                <pre style={{margin:0,fontFamily:"inherit",whiteSpace:"pre-wrap",fontSize:12,textAlign:"left"}}>{typedText}{(loginPhase==="typing"||loginPhase==="menu")&&<span style={{animation:"blink 1s step-end infinite"}}>█</span>}</pre>
                 {loginMenu(loginPhase, setLoginPhase)}
               </div>
             )}

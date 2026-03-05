@@ -23,7 +23,11 @@
       "Bash(git push:*)",
       "Bash(\"/c/Users/rober/AppData/Local/GitHubDesktop/bin/github\":*)",
       "Bash(winget install:*)",
-      "Bash(export:*)"
+      "Bash(export:*)",
+      "Bash(railway status:*)",
+      "WebSearch",
+      "WebFetch(domain:www.mlb.com)",
+      "WebFetch(domain:www.fangraphs.com)"
     ]
   }
 }
